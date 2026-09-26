@@ -1,0 +1,9 @@
+{
+  "checks": [
+    {
+      "name": "runner behavior and disposable adoption",
+      "argv": ["python3", "-m", "unittest", "discover", "-s", "tests", "-v"],
+      "timeout_seconds": 60
+    }
+  ]
+}
