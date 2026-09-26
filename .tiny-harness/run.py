@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Tiny Harness: validate the staged tree, commit it, or install without overwrites."""
 import argparse
+import hashlib
 import json
 import math
 import os
 from pathlib import Path
 import shutil
 import signal
+import stat
 import subprocess
 import sys
 import tempfile
@@ -50,10 +52,19 @@ def head(root):
     return result.stdout.strip() if result.returncode == 0 else None
 
 
+def unique_object(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("Duplicate configuration key: " + repr(key))
+        result[key] = value
+    return result
+
+
 def configuration(snapshot):
     path = snapshot / ".tiny-harness/checks.json"
     try:
-        config = json.loads(path.read_text())
+        config = json.loads(path.read_text(), object_pairs_hook=unique_object)
     except (OSError, ValueError) as error:
         raise Failure("Required staged configuration is missing or invalid: " + str(error))
     if not isinstance(config, dict) or set(config) != {"checks"}:
@@ -104,6 +115,44 @@ def unchanged(root, tree, previous_head):
         raise Failure("Index or HEAD changed during validation; inspect changes and run again.")
 
 
+def snapshot_signature(path):
+    """Record content, file kind, and executable bit without following symlinks."""
+    try:
+        mode = path.lstat().st_mode
+        content = None
+        if stat.S_ISLNK(mode):
+            content = os.readlink(path)
+        elif stat.S_ISREG(mode):
+            digest = hashlib.sha256()
+            with path.open("rb") as stream:
+                for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                    digest.update(chunk)
+            content = digest.digest()
+        return stat.S_IFMT(mode), mode & stat.S_IXUSR, content
+    except OSError:
+        return None
+
+
+def snapshot_baseline(snapshot):
+    # At checkout time these are staged paths and their parent directories only.
+    # Retaining this list lets checks add untracked build output afterward.
+    baseline = {}
+    for path in [snapshot, *snapshot.rglob("*")]:
+        signature = snapshot_signature(path)
+        if signature is None:
+            raise Failure("Cannot inspect staged snapshot path: " + str(path.relative_to(snapshot)))
+        baseline[path] = signature
+    return baseline
+
+
+def snapshot_unchanged(snapshot, baseline, check):
+    for path, signature in baseline.items():
+        if snapshot_signature(path) != signature:
+            raise Failure("Check " + repr(check["name"]) + " modified staged snapshot path "
+                          + repr(str(path.relative_to(snapshot))) + "; no commit was made. "
+                          "Run repairs before staging, then validate again.")
+
+
 def validate(root):
     tree, previous_head = git(root, "write-tree"), head(root)
     print("Validating staged tree " + tree, flush=True)
@@ -117,8 +166,12 @@ def validate(root):
         if any(line.startswith("160000 ") for line in entries.splitlines()):
             raise Failure("Submodules are unsupported; required contents cannot be silently omitted.")
         git(root, "checkout-index", "--all", "--prefix=" + str(snapshot) + os.sep, env=env)
+        baseline = snapshot_baseline(snapshot)
         checks = configuration(snapshot)
-        results = [run_check(check, snapshot) for check in checks]
+        results = []
+        for check in checks:
+            results.append(run_check(check, snapshot))
+            snapshot_unchanged(snapshot, baseline, check)
         unchanged(root, tree, previous_head)
         if not all(results):
             raise Failure("Required validation failed; no commit was made.")

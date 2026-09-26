@@ -37,15 +37,16 @@ instructions or opening message:
 ## Configure real checks
 
 The installed configuration starts with an empty `checks` list, which **fails**
-validation. Replace it with the project's required checks. For example, a Python
-project with actual tests under `tests/` could use:
+validation. Replace it with the project's required checks. For a Python unittest
+project, adapt [tests/run.py](tests/run.py) into a tracked check script without
+overwriting existing files. That script rejects empty discovery. Configure it as:
 
 ```json
 {
   "checks": [
     {
       "name": "behavior tests",
-      "argv": ["python3", "-m", "unittest", "discover", "-s", "tests", "-v"],
+      "argv": ["python3", "tests/run.py"],
       "timeout_seconds": 120
     }
   ]
@@ -53,9 +54,10 @@ project with actual tests under `tests/` could use:
 ```
 
 Each check needs a unique nonempty name, an argument list, and a finite positive
-timeout in seconds. Unknown keys are rejected, including attempted optional/skip
-flags. Commands run in order; a failure remains a failure even when later checks
-pass. Every configured check runs every time. A missing tool or timeout fails.
+timeout in seconds. Duplicate JSON keys and unknown keys are rejected, including
+attempted optional/skip flags. Commands run in order; an ordinary failure remains
+a failure even when later checks pass. Changes to staged snapshot files stop
+validation immediately. Every configured check is required; a missing tool or timeout fails.
 Timeouts terminate the check's process group on supported platforms.
 
 Use relevant, proportionate checks with observable behavior. A command returning
@@ -103,6 +105,14 @@ Build output is discarded afterward. Partially staged work is supported: an
 unstaged repair cannot hide a failing staged version. Checks see the same staged
 content on every fresh run, although external tools/caches can still affect them.
 
+After each check, the runner verifies that the snapshot's original files,
+symlinks, executable bits, and directory types remain unchanged. A changed,
+deleted, or unreadable staged path blocks the commit before another check can
+run against repaired content. Untracked build output is allowed. Run formatters
+and generators that update tracked files before staging; use read-only check
+modes during validation. This guard checks state between commands; it cannot
+detect a command that changes and restores a file internally or falsifies results.
+
 Dependency installation must be explicit. Git-dependent build tools need an
 adapted check; there is no Git history inside the temporary snapshot. Submodules
 are rejected instead of silently omitted. Git LFS/filter-dependent checkouts,
@@ -123,6 +133,9 @@ commit. Run the canonical validation again when evidence is missing or stale.
   An unstaged config is deliberately ignored.
 - **Check failure or timeout:** inspect its output, repair the cause or prerequisite,
   stage the repair, and rerun. Change approach when evidence warrants it.
+- **Snapshot modified:** perform the repair in your working tree, review and stage
+  it, then use checks that leave staged snapshot files unchanged. Do not disable
+  the guard or suppress a required check.
 - **Index/HEAD changed:** inspect competing changes, coordinate the writer, and
   rerun against the intended staged tree. Do not reset someone else's work.
 - **Hook/signing/identity failure:** diagnose the existing Git setup. Do not
@@ -152,8 +165,8 @@ server-side enforcement, configure its existing CI/branch rules separately.
 ## This repository
 
 The contract is loaded through `AGENTS.md`; `.tiny-harness/TASK.md` records the
-build. `.tiny-harness/checks.json` runs `tests/test_runner.py` through the canonical
-entry point. Tests use disposable repositories, exercise failure and recovery,
+build. `.tiny-harness/checks.json` invokes `tests/run.py`, which discovers the
+behavior tests and rejects zero discovered tests. Tests use disposable repositories, exercise failure and recovery,
 and invoke an installed copy without changing your Git settings.
 
 [Source notes](SOURCE-NOTES.md) describe the actual source and design reductions.

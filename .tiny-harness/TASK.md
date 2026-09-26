@@ -1,46 +1,48 @@
 # Task
 
-Status: complete (final documentation commit pending validation)
+Status: fixes verified; commit-time validation pending
 
 ## Outcome and scope
-Build a small, portable agent workflow from the supplied instruction kit. Keep
-the source unchanged. Produce a separate repository with atomic local commits;
-publication is outside scope. Destination was absent; no pre-existing work found.
+Fix the three confirmed pre-publication audit findings. Preserve the existing
+repository and source kit. Make a validated local commit; do not push or publish.
+The repository was clean at 9bef864 when work resumed. That documentation commit
+completed the earlier build despite its checkpoint still saying it was pending.
 
 ## Acceptance criteria
-- [x] Contract separates constraints from preferences and supports autonomous recovery.
-- [x] Staged-tree validation and commits fail visibly on missing or failed checks.
-- [x] Adoption preserves existing instructions, hooks, configuration, and history.
-- [x] Disposable tests exercise meaningful success and failure cases.
-- [x] README explains setup, normal work, recovery, enforcement, and limits.
-- [x] Source comparison, attribution, and public-release hygiene are recorded.
+- [x] Reject changed/deleted/replaced staged snapshot paths before committing.
+- [x] Preserve support for untracked build output and existing recovery behavior.
+- [x] Reject duplicate JSON object keys before any check runs.
+- [x] Make this repository's required suite fail when no tests are discovered.
+- [x] Add behavioral regressions and update configuration/recovery documentation.
+- [x] Pass the canonical staged-tree check and original independent audit probes.
 
 ## Checkpoint
-Source inspection complete: four Markdown files and their referenced global
-workflow skill; no executable harness, hooks, task tracker, or license notice.
-Source file hashes recorded externally for a final unchanged check.
+Baseline: 39e644a and 9bef864 contain the original implementation and documentation.
+The source kit remains read-only; its four file hashes were verified unchanged
+at the end of the original build. The audit added no release-repository changes.
 
-Retain source-first inspection, fresh evidence, behavior tests, proportionality,
-and atomic commits. Replace phase approvals/operator-only commits with scoped
-autonomy. Use one Python standard-library runner, explicit JSON checks, and one
-task record. Validate an isolated copy of the index to preserve unrelated edits.
-No hook replacement; commit wrapper is opt-in, not tamper-proof enforcement.
+Fixes: capture snapshot content/type/executable-bit signatures before checks and
+compare after each command, including symlinks and parent directories. Stop on a
+change; generated untracked output remains allowed. Reject duplicate JSON keys
+at all object depths. A small project-specific unittest entry point rejects
+empty discovery and propagates test failures. No generic test-framework parser,
+hook replacement, external dependency, or background service was introduced.
 
-Verification: canonical staged-tree validation passed all 17 behavior tests,
-including installed-copy adoption, failed-check recovery, hook preservation,
-and commits that preserve unrelated work. Staged whitespace check passed.
+Evidence: 21 tests passed through canonical staged-tree validation, including regressions for
+all three findings; snapshot cases cover content, deletion, permissions, symlinks,
+parent-directory replacement, and a mutation by a failed check. The existing
+untracked-output, unrelated-edit, hook, timeout, and installation tests still pass.
+All three original independent audit probes pass against the proposed staged
+files in disposable repositories. The probe assertions were unchanged; only the
+clone fixture was updated to apply the staged patch before testing. Staged
+whitespace and local documentation-link checks also pass.
 
-Core commit: 39e644a (validated by the runner, 17 tests passed).
-README and source comparison completed; installation commands, limitations,
-recovery steps, and attribution checked against the implementation. All four
-source-file SHA-256 hashes match their pre-build values; source unchanged.
+Remaining limits: checks are trusted commands. Snapshot state is compared between
+commands, so an internal change-and-restore is not detected. Direct Git bypass,
+modifying hooks, concurrent writers, explicit dependency setup, and unsupported
+submodules remain documented. Linux and other Python versions remain unverified.
 
-Final release review: reusable files contain no personal paths or credentials.
-The repository intentionally uses the existing Git identity in commit metadata.
-No remote or publication was requested. Linux and other Python versions remain
-unverified; direct Git bypass, trusted checks, concurrent writers, modifying
-hooks, dependency setup, and unsupported submodules are documented limitations.
-
-Next: commit this documentation through the runner (validation must pass), then
-confirm clean Git status. There is no remaining implementation work; publication
-is a separate authorized task. The final commit ID belongs in the handoff.
+No code fixes remain. This checkpoint accompanies the local fix commit; the
+runner must rerun required validation before creating it. Read the Git log for
+the resulting commit identity and reconcile this checkpoint on resumption.
+Publication remains explicitly unauthorized.

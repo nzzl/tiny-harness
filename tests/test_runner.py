@@ -2,6 +2,7 @@
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -239,6 +240,79 @@ class HarnessTests(unittest.TestCase):
     def test_empty_message_does_not_create_commit(self):
         self.configure()
         self.assert_failed(self.harness("commit", "-m", "   "), "meaningful commit message")
+
+    def test_snapshot_changes_block_commit_before_later_checks(self):
+        self.configure()
+        (self.root / "value").write_text("bad")
+        (self.root / "link").symlink_to("value")
+        (self.root / "directory").mkdir()
+        (self.root / "directory/nested").write_text("original")
+        self.git("add", "value", "link", "directory/nested")
+        mutations = [
+            "Path('value').write_text('good')",
+            "Path('value').unlink()",
+            "Path('value').chmod(0o755)",
+            "Path('value').unlink(); Path('value').symlink_to('link')",
+            "Path('link').unlink(); Path('link').symlink_to('directory/nested')",
+            "Path('link').unlink(); Path('link').write_text('replacement')",
+            "Path('directory').rename('moved'); Path('directory').symlink_to('moved', target_is_directory=True)",
+            "Path('value').write_text('good'); raise SystemExit(7)",
+        ]
+        for mutation in mutations:
+            with self.subTest(mutation=mutation):
+                self.write_checks([
+                    {"name": "mutating check", "argv": [sys.executable, "-c", "from pathlib import Path; " + mutation], "timeout_seconds": 5},
+                    {"name": "later check", "argv": [sys.executable, "-c", "print('later-check-ran')"], "timeout_seconds": 5},
+                ])
+                self.git("add", ".tiny-harness/checks.json")
+                result = self.harness("commit", "-m", "Must reject a modified snapshot")
+                self.assert_failed(result, "modified staged snapshot path")
+                self.assertNotIn("later-check-ran", result.stdout)
+                self.assertNotEqual(self.run_command(["git", "rev-parse", "--verify", "HEAD"]).returncode, 0)
+                self.assertEqual(self.git("show", ":value"), "bad")
+                self.assertEqual((self.root / "value").read_text(), "bad")
+                self.assertEqual(os.readlink(self.root / "link"), "value")
+                self.assertFalse((self.root / "directory").is_symlink())
+
+    def test_duplicate_json_keys_block_commit_before_checks(self):
+        self.install()
+        failing = json.dumps({"name": "required", "argv": [sys.executable, "-c", "raise SystemExit(7)"], "timeout_seconds": 5})
+        passing = json.dumps({"name": "passing", "argv": [sys.executable, "-c", "pass"], "timeout_seconds": 5})
+        contents = ['{"checks": [' + failing + '], "checks": [' + passing + ']}']
+        for field, value in (("name", '"replacement"'), ("argv", '["missing-tool"]'), ("timeout_seconds", '10')):
+            contents.append('{"checks": [' + passing[:-1] + ', ' + json.dumps(field) + ': ' + value + '}]}')
+        for content in contents:
+            with self.subTest(content=content):
+                (self.root / ".tiny-harness/checks.json").write_text(content)
+                self.git("add", ".tiny-harness")
+                result = self.harness("commit", "-m", "Must reject ambiguous configuration")
+                self.assert_failed(result, "Duplicate configuration key")
+                self.assertNotIn("RUN ", result.stdout)
+                self.assertNotEqual(self.run_command(["git", "rev-parse", "--verify", "HEAD"]).returncode, 0)
+
+    def test_required_suite_rejects_empty_discovery(self):
+        self.install()
+        (self.root / "tests").mkdir()
+        shutil.copyfile(SOURCE / "tests/run.py", self.root / "tests/run.py")
+        shutil.copyfile(SOURCE / ".tiny-harness/checks.json", self.root / ".tiny-harness/checks.json")
+        # The original audit's accidental rename keeps a test file undiscoverable.
+        (self.root / "tests/runner_tests.py").write_text("import unittest\nclass Example(unittest.TestCase):\n    def test_example(self):\n        pass\n")
+        self.git("add", ".tiny-harness", "tests")
+        result = self.harness("commit", "-m", "Must reject zero discovered tests")
+        self.assert_failed(result, "no tests discovered")
+        self.assertNotEqual(self.run_command(["git", "rev-parse", "--verify", "HEAD"]).returncode, 0)
+
+    def test_suite_entrypoint_runs_discovered_tests_and_propagates_failures(self):
+        (self.root / "tests").mkdir()
+        shutil.copyfile(SOURCE / "tests/run.py", self.root / "tests/run.py")
+        test = self.root / "tests/test_example.py"
+        test.write_text("import unittest\nclass Example(unittest.TestCase):\n    def test_example(self):\n        self.fail('behavior-failure-evidence')\n")
+        result = self.run_command([sys.executable, "-B", "tests/run.py"])
+        self.assert_failed(result, "behavior-failure-evidence")
+        test.write_text("import unittest\nclass Example(unittest.TestCase):\n    def test_example(self):\n        pass\n")
+        result = self.run_command([sys.executable, "-B", "tests/run.py"])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("Ran 1 test", result.stderr)
 
 
 if __name__ == "__main__":

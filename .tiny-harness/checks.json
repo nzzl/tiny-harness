@@ -2,7 +2,7 @@
   "checks": [
     {
       "name": "runner behavior and disposable adoption",
-      "argv": ["python3", "-m", "unittest", "discover", "-s", "tests", "-v"],
+      "argv": ["python3", "tests/run.py"],
       "timeout_seconds": 60
     }
   ]
