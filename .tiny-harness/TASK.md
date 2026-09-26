@@ -1,6 +1,6 @@
 # Task
 
-Status: in progress
+Status: complete (final documentation commit pending validation)
 
 ## Outcome and scope
 Build a small, portable agent workflow from the supplied instruction kit. Keep
@@ -12,8 +12,8 @@ publication is outside scope. Destination was absent; no pre-existing work found
 - [x] Staged-tree validation and commits fail visibly on missing or failed checks.
 - [x] Adoption preserves existing instructions, hooks, configuration, and history.
 - [x] Disposable tests exercise meaningful success and failure cases.
-- [ ] README explains setup, normal work, recovery, enforcement, and limits.
-- [ ] Source comparison, attribution, and public-release hygiene are recorded.
+- [x] README explains setup, normal work, recovery, enforcement, and limits.
+- [x] Source comparison, attribution, and public-release hygiene are recorded.
 
 ## Checkpoint
 Source inspection complete: four Markdown files and their referenced global
@@ -30,5 +30,17 @@ Verification: canonical staged-tree validation passed all 17 behavior tests,
 including installed-copy adoption, failed-check recovery, hook preservation,
 and commits that preserve unrelated work. Staged whitespace check passed.
 
-Next: make the core commit through the runner; finish and verify public-facing
-documentation and source preservation. Commit validation will rerun afresh.
+Core commit: 39e644a (validated by the runner, 17 tests passed).
+README and source comparison completed; installation commands, limitations,
+recovery steps, and attribution checked against the implementation. All four
+source-file SHA-256 hashes match their pre-build values; source unchanged.
+
+Final release review: reusable files contain no personal paths or credentials.
+The repository intentionally uses the existing Git identity in commit metadata.
+No remote or publication was requested. Linux and other Python versions remain
+unverified; direct Git bypass, trusted checks, concurrent writers, modifying
+hooks, dependency setup, and unsupported submodules are documented limitations.
+
+Next: commit this documentation through the runner (validation must pass), then
+confirm clean Git status. There is no remaining implementation work; publication
+is a separate authorized task. The final commit ID belongs in the handoff.
