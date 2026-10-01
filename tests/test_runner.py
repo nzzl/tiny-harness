@@ -78,16 +78,87 @@ class HarnessTests(unittest.TestCase):
                 self.git("add", ".tiny-harness")
                 self.assert_failed(self.harness("validate"), "ERROR:")
 
-    def test_failed_check_blocks_commit_and_runs_other_checks(self):
+    def test_validate_reports_failure_and_runs_other_checks(self):
         self.configure()
         self.write_checks([
             {"name": "fails", "argv": [sys.executable, "-c", "raise SystemExit(7)"], "timeout_seconds": 5},
             {"name": "still runs", "argv": [sys.executable, "-c", "print('second-check-evidence')"], "timeout_seconds": 5}])
         self.git("add", ".tiny-harness/checks.json")
-        result = self.harness("commit", "-m", "Must fail")
+        result = self.harness("validate")
         self.assert_failed(result, "exit 7")
         self.assertIn("second-check-evidence", result.stdout)
         self.assertNotEqual(self.run_command(["git", "rev-parse", "--verify", "HEAD"]).returncode, 0)
+
+    def test_commit_stops_on_failure_and_reruns_all_checks_after_repair(self):
+        self.configure()
+        later = {"name": "later", "argv": [sys.executable, "-c", "print('later-check-evidence')"],
+                 "timeout_seconds": 5}
+        failures = [([sys.executable, "-c", "raise SystemExit(7)"], 5, "exit 7"),
+                    (["tiny-harness-nonexistent-command"], 5, "No such file"),
+                    ([sys.executable, "-c", "import time; time.sleep(10)"], 0.05, "timed out")]
+        for argv, timeout, evidence in failures:
+            with self.subTest(evidence=evidence):
+                self.write_checks([{"name": "first", "argv": argv, "timeout_seconds": timeout}, later])
+                self.git("add", ".tiny-harness/checks.json")
+                result = self.harness("commit", "-m", "Must fail promptly")
+                self.assert_failed(result, evidence)
+                self.assertNotIn("later-check-evidence", result.stdout)
+                self.assertNotIn("PASS all", result.stdout)
+                self.assertNotEqual(self.run_command(["git", "rev-parse", "--verify", "HEAD"]).returncode, 0)
+        self.write_checks([{"name": "first", "argv": [sys.executable, "-c", "print('first-check-evidence')"],
+                            "timeout_seconds": 5}, later])
+        self.git("add", ".tiny-harness/checks.json")
+        result = self.harness("commit", "-m", "Repair first check")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("first-check-evidence", result.stdout)
+        self.assertIn("later-check-evidence", result.stdout)
+        self.assertIn("PASS all 2", result.stdout)
+
+    def test_empty_commit_does_not_run_checks_or_hooks(self):
+        self.configure("print('check-must-not-run')")
+        self.git("commit", "-qm", "Fixture baseline")
+        previous = self.git("rev-parse", "HEAD")
+        hook = self.root / ".git/hooks/pre-commit"
+        hook.write_text("#!/bin/sh\necho hook-must-not-run >&2\nexit 1\n")
+        hook.chmod(0o755)
+        (self.root / ".tiny-harness/TASK.md").write_text("Unstaged user work")
+        (self.root / "notes").write_text("Untracked user work")
+        before = self.git("status", "--porcelain")
+        result = self.harness("commit", "-m", "Nothing staged")
+        self.assert_failed(result, "Nothing staged to commit")
+        self.assertNotIn("Validating staged tree", result.stdout)
+        self.assertNotIn("check-must-not-run", result.stdout)
+        self.assertNotIn("hook-must-not-run", result.stderr)
+        self.assertEqual(self.git("rev-parse", "HEAD"), previous)
+        self.assertEqual(self.git("status", "--porcelain"), before)
+
+    def test_empty_initial_commit_does_not_validate_untracked_harness(self):
+        self.install()
+        result = self.harness("commit", "-m", "No files staged yet")
+        self.assert_failed(result, "Nothing staged to commit")
+        self.assertNotIn("Validating staged tree", result.stdout)
+        self.assertNotEqual(self.run_command(["git", "rev-parse", "--verify", "HEAD"]).returncode, 0)
+
+    def test_merge_with_unchanged_tree_still_validates_and_commits(self):
+        self.configure("print('merge-check-evidence')")
+        self.git("commit", "-qm", "Fixture baseline")
+        original = self.git("branch", "--show-current")
+        self.git("checkout", "-qb", "side")
+        (self.root / "feature").write_text("same final content")
+        self.git("add", "feature")
+        self.git("commit", "-qm", "Implement on side")
+        side = self.git("rev-parse", "HEAD")
+        self.git("checkout", original)
+        self.git("cherry-pick", "--no-commit", side)
+        self.git("commit", "-qm", "Implement independently")
+        previous = self.git("rev-parse", "HEAD")
+        self.git("merge", "--no-ff", "--no-commit", "side")
+        self.assertEqual(self.git("write-tree"), self.git("rev-parse", "HEAD^{tree}"))
+        result = self.harness("commit", "-m", "Record merged ancestry")
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("merge-check-evidence", result.stdout)
+        self.assertEqual(self.git("rev-parse", "HEAD^1"), previous)
+        self.assertEqual(self.git("rev-parse", "HEAD^2"), side)
 
     def test_missing_executable_and_timeout(self):
         self.configure()

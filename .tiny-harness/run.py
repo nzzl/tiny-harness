@@ -153,7 +153,7 @@ def snapshot_unchanged(snapshot, baseline, check):
                           "Run repairs before staging, then validate again.")
 
 
-def validate(root):
+def validate(root, *, fail_fast=False):
     tree, previous_head = git(root, "write-tree"), head(root)
     print("Validating staged tree " + tree, flush=True)
     with tempfile.TemporaryDirectory(prefix="tiny-harness-") as directory:
@@ -172,6 +172,9 @@ def validate(root):
         for check in checks:
             results.append(run_check(check, snapshot))
             snapshot_unchanged(snapshot, baseline, check)
+            if fail_fast and not results[-1]:
+                print("Stopping after the first failed check; run validate for all check results.", flush=True)
+                break
         unchanged(root, tree, previous_head)
         if not all(results):
             raise Failure("Required validation failed; no commit was made.")
@@ -182,7 +185,14 @@ def validate(root):
 def commit(root, message):
     if not message.strip():
         raise Failure("A meaningful commit message is required.")
-    tree, previous_head = validate(root)
+    staged = subprocess.run(["git", "-C", str(root), "diff", "--cached", "--quiet"],
+                            text=True, capture_output=True)
+    if staged.returncode not in (0, 1):
+        raise Failure(staged.stderr.strip() or "Cannot inspect staged changes.")
+    # A pending merge can record meaningful ancestry without changing the tree.
+    if staged.returncode == 0 and not (root / git(root, "rev-parse", "--git-path", "MERGE_HEAD")).is_file():
+        raise Failure("Nothing staged to commit; stage intended changes before committing.")
+    tree, previous_head = validate(root, fail_fast=True)
     unchanged(root, tree, previous_head)
     result = subprocess.run(["git", "-C", str(root), "commit", "-m", message])
     if result.returncode:

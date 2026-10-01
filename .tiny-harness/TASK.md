@@ -3,31 +3,34 @@
 Status: locally verified; commit-time validation pending
 
 ## Outcome and scope
-Add basic lint and CI to this repository, with advisory production size/complexity
-checks. Preserve the generic standard-library harness runtime and behavioral tests.
-Make a validated local commit; do not push or publish.
-The repository was clean at 2695968, which completed the previous audit fixes.
+Remove two measured development delays: validating empty commits and running
+remaining checks after a commit check has already failed. Preserve exhaustive
+standalone validation, staged-snapshot protection, and existing hooks.
+The repository was clean at 2911e76. Make a local validated commit; do not publish.
 
 ## Acceptance criteria
-- [x] Canonical validation requires pinned basic lint and the existing behavior suite.
-- [x] CI is configured to run canonical validation on macOS/Linux and Python 3.9/3.14.
-- [x] File/function size and complexity findings remain advisory, excluding tests.
-- [x] Missing tools and lint errors fail; size/complexity findings do not fail.
-- [x] Validate changes and document setup and remote-verification limits.
+- [x] Empty commits stop before checks/hooks, including an unborn repository.
+- [x] Pending merges with unchanged content still validate and commit ancestry.
+- [x] Failed, missing, and timed-out commit checks prevent later checks and commits.
+- [x] Successful retries run every required check afresh.
+- [x] Standalone validation still collects ordinary failures and later results.
+- [x] Required lint/tests pass and measured delays improve.
 
 ## Checkpoint
-Added pinned Ruff development setup, a read-only lint check, a four-job CI matrix,
-and advisory size/complexity commands. The empty-discovery regression retains the
-actual required check configuration and now includes its Ruff configuration file.
-Existing runtime, install behavior, and check-configuration semantics are unchanged.
+Prepared early staged-change detection, commit-only fail-fast validation, focused
+behavioral regressions, and matching workflow documentation. Pending merges are
+exempt from the empty-content shortcut because they can record meaningful ancestry.
 
-Evidence: required lint and all 21 behavioral tests passed through canonical
-staged-tree validation on macOS with Python 3.9.6 and 3.14.7. Disposable probes
-confirmed that an undefined name fails canonical validation, oversized production
-files/functions and high complexity remain nonblocking, and tests are excluded
-from size advisories. Workflow YAML parsed successfully and its matrix was checked.
+Evidence: required lint and all 25 behavioral tests passed through canonical
+staged-tree validation on macOS with Python 3.9.6 and 3.14.7. Tests cover failed,
+missing, and timed-out checks; fresh successful retries; exhaustive standalone
+validation; empty initial/existing commits; unchanged-tree merges; and existing
+snapshot, staging, installation, and hook guarantees.
 
-Next: apply the reviewed files and rerun canonical validation through the local
-commit wrapper. This checkpoint accompanies that commit; read the log for its ID.
-Remote CI and Linux remain unverified; no Git remote is configured. Branch
-protection is unchanged. No publication is authorized.
+Three serial before/after timing trials in disposable repository copies measured
+median empty-commit latency of 6.636s -> 0.054s and first-check lint failure latency
+of 6.352s -> 0.113s. These are local measurements, not portable timing guarantees.
+
+Next: apply the reviewed files and commit through the harness, which reruns all
+required checks. This checkpoint accompanies that commit; read the log for its ID.
+Remote CI has not run; no remote is configured. No publication is authorized.

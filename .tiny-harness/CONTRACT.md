@@ -22,8 +22,9 @@
   Never weaken or remove a required check to make a failure disappear. A missing
   prerequisite is a failure to resolve or report, never a silent skip.
 - Commit with `python3 .tiny-harness/run.py commit -m "Reason for this change"`.
-  This runs the canonical validation entry point against the staged tree afresh.
-  Separate validation: `python3 .tiny-harness/run.py validate`. Do not bypass failed
+  This validates the staged tree afresh, stopping at the first failed check;
+  an empty commit exits before checks. For all ordinary check results, use
+  `python3 .tiny-harness/run.py validate`. Do not bypass failed
   checks or existing hooks. Keep commits small, coherent, and meaningful.
 - On failure, inspect the error and relevant state, identify a cause, make a
   targeted repair, and rerun. Change approach when evidence contradicts it. If

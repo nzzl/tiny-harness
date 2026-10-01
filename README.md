@@ -55,9 +55,12 @@ overwriting existing files. That script rejects empty discovery. Configure it as
 
 Each check needs a unique nonempty name, an argument list, and a finite positive
 timeout in seconds. Duplicate JSON keys and unknown keys are rejected, including
-attempted optional/skip flags. Commands run in order; an ordinary failure remains
-a failure even when later checks pass. Changes to staged snapshot files stop
-validation immediately. Every configured check is required; a missing tool or timeout fails.
+attempted optional/skip flags. Commands run in order. Commit validation stops at
+the first failed check, including a missing tool or timeout; no commit is made.
+Standalone `validate` continues after ordinary failures to collect all check
+results, and later successes cannot erase a failure. Changes to staged snapshot
+files stop either mode immediately. Every configured check remains required for
+a successful commit, and a retry runs the checks afresh.
 Timeouts terminate the check's process group on supported platforms.
 
 Use relevant, proportionate checks with observable behavior. A command returning
@@ -91,7 +94,10 @@ must fail visibly. Do not commit credentials or personal environment paths.
    identity, signing settings, and hooks. No automatic staging or history rewriting.
 
 Use `python3 .tiny-harness/run.py validate` for validation without committing.
-The commit command always validates again; it does not trust a stale success file.
+If nothing is staged, `commit` exits before running checks or hooks. A pending
+merge with an unchanged tree still validates and commits its ancestry. Every
+nonempty commit attempt validates afresh; no stale success file is trusted. After
+a failed commit check, use `validate` when you want all remaining diagnostics.
 Keep commits coherent. A checkpoint committed with a change can say that commit
 validation is pending; the command output supplies the result. Report the new
 commit ID at handoff without creating an endless bookkeeping commit loop.
