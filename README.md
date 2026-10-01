@@ -69,6 +69,10 @@ zero discovered tests and avoid cached no-op runs where appropriate. The harness
 cannot infer that a green command actually tested anything. Add broader checks
 when risk warrants them; never remove a required check merely to obtain green.
 
+For pure-Python src-layout projects and Node/npm projects, start from the
+[tested adoption examples](examples/README.md). These are optional configurations;
+merge them with existing required checks rather than replacing those checks.
+
 Arguments do not undergo shell expansion. Use an explicit shell command only
 when necessary. Keep setup reproducible: a required check can invoke a tracked
 script that installs locked dependencies and runs tests. Missing prerequisites
@@ -107,9 +111,17 @@ commit ID at handoff without creating an endless bookkeeping commit loop.
 The runner freezes the Git index into a tree and checks out a fresh temporary
 copy using a private index. Checks and configuration come from that staged tree.
 Unstaged edits, untracked files, ignored dependencies, and `.git` are absent.
-Build output is discarded afterward. Partially staged work is supported: an
-unstaged repair cannot hide a failing staged version. Checks see the same staged
-content on every fresh run, although external tools/caches can still affect them.
+Build output is discarded afterward. Partially staged work is supported: the
+snapshot contains the staged versions, even when the working files differ.
+
+The process environment and installed tools are inherited. A check must actually
+read the snapshot's source for staged-source validation to hold. For example,
+Python editable installs or an older installed project can redirect imports to
+code outside the snapshot, allowing an unstaged repair to hide a staged failure.
+The runner does not infer which source an arbitrary command imports or executes.
+Use explicit dependency setup and project-source origin checks where appropriate;
+see the tested [Python and Node adoption examples](examples/README.md). External
+services, tools, and caches can also affect results.
 
 After each check, the runner verifies that the snapshot's original files,
 symlinks, executable bits, and directory types remain unchanged. A changed,
@@ -191,8 +203,12 @@ The harness runtime and installed copies still require only Git and Python's
 standard library. Adopting repositories configure their own checks.
 
 GitHub Actions runs the same canonical validation on macOS/Linux and Python
-3.9/3.14 for pushes and pull requests. Remote runs require publishing this workflow;
-merge enforcement additionally requires the repository's branch rules.
+3.9/3.14 for pushes and pull requests. A separate Linux job tests the npm adoption
+recipe with Node 22. Run that probe locally with `python3 tests/check_node_example.py`
+when changing the Node example; it requires Node/npm but no registry access.
+Python recipe regressions are part of the required behavior suite and use an
+isolated editable-style import fixture without downloading packaging tools.
+Merge enforcement additionally requires the repository's branch rules.
 
 CI also reports advisory production-code review triggers: files over 300 physical
 lines, functions over 50 physical lines, and McCabe complexity over 10. Tests are

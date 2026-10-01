@@ -33,3 +33,20 @@ jobs:
         run: |
           python tests/size_warnings.py
           ruff check --no-cache --config ruff.toml --select C901 --exit-zero .tiny-harness
+
+  node-example:
+    name: Node adoption example
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.14"
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+      - name: Check the shipped npm recipe
+        run: python tests/check_node_example.py

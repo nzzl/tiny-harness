@@ -367,9 +367,11 @@ class HarnessTests(unittest.TestCase):
         shutil.copyfile(SOURCE / "tests/run.py", self.root / "tests/run.py")
         shutil.copyfile(SOURCE / ".tiny-harness/checks.json", self.root / ".tiny-harness/checks.json")
         shutil.copyfile(SOURCE / "ruff.toml", self.root / "ruff.toml")
+        (self.root / "examples").mkdir()
+        (self.root / "examples/README").write_text("Fixture example directory")
         # The original audit's accidental rename keeps a test file undiscoverable.
         (self.root / "tests/runner_tests.py").write_text("import unittest\nclass Example(unittest.TestCase):\n    def test_example(self):\n        pass\n")
-        self.git("add", ".tiny-harness", "tests", "ruff.toml")
+        self.git("add", ".tiny-harness", "tests", "ruff.toml", "examples")
         result = self.harness("commit", "-m", "Must reject zero discovered tests")
         self.assert_failed(result, "no tests discovered")
         self.assertNotEqual(self.run_command(["git", "rev-parse", "--verify", "HEAD"]).returncode, 0)

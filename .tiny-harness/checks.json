@@ -2,7 +2,7 @@
   "checks": [
     {
       "name": "basic Python lint",
-      "argv": ["ruff", "check", "--no-cache", "--config", "ruff.toml", ".tiny-harness", "tests"],
+      "argv": ["ruff", "check", "--no-cache", "--config", "ruff.toml", ".tiny-harness", "tests", "examples"],
       "timeout_seconds": 30
     },
     {

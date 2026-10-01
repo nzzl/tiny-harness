@@ -1,36 +1,38 @@
 # Task
 
-Status: locally verified; commit-time validation pending
+Status: locally verified; publication and remote CI pending
 
 ## Outcome and scope
-Remove two measured development delays: validating empty commits and running
-remaining checks after a commit check has already failed. Preserve exhaustive
-standalone validation, staged-snapshot protection, and existing hooks.
-The repository was clean at 2911e76. Make a local validated commit; do not publish.
+Prepare and publish nzzl/tiny-harness as a public v0.1 release after addressing
+adoption findings. Add tested Python/Node recipes and clarify snapshot/environment
+boundaries. Preserve the small generic runner and existing required checks.
+The repository was clean at c393cf0 when this task began.
+
+The user explicitly authorized replacing personal author/committer email addresses
+with their GitHub noreply address before publication. This overrides the contract's
+usual prohibition on history rewriting for this specific metadata-only operation.
+Preserve code/history structure and retain a local backup. Publish only sanitized
+history. Publish the v0.1.0 tag only after all configured GitHub CI jobs pass.
 
 ## Acceptance criteria
-- [x] Empty commits stop before checks/hooks, including an unborn repository.
-- [x] Pending merges with unchanged content still validate and commit ancestry.
-- [x] Failed, missing, and timed-out commit checks prevent later checks and commits.
-- [x] Successful retries run every required check afresh.
-- [x] Standalone validation still collects ordinary failures and later results.
-- [x] Required lint/tests pass and measured delays improve.
+- [x] Python example rejects editable-source false passes and external fallbacks.
+- [x] Node example installs locked dependencies, rejects staged failures, and recovers.
+- [x] Documentation states the inherited-environment boundary precisely.
+- [x] Required lint/tests and separate Node example pass locally.
+- [ ] Published author/committer email addresses use GitHub noreply.
+- [ ] GitHub CI passes before tagging v0.1.0.
 
 ## Checkpoint
-Prepared early staged-change detection, commit-only fail-fast validation, focused
-behavioral regressions, and matching workflow documentation. Pending merges are
-exempt from the empty-content shortcut because they can record meaningful ancestry.
+Prepared optional recipes, Python source-origin regressions, an offline npm fixture,
+and a dedicated Node CI job. The runner still installs only its original five
+files; adopting repositories explicitly select/configure their own checks.
 
-Evidence: required lint and all 25 behavioral tests passed through canonical
-staged-tree validation on macOS with Python 3.9.6 and 3.14.7. Tests cover failed,
-missing, and timed-out checks; fresh successful retries; exhaustive standalone
-validation; empty initial/existing commits; unchanged-tree merges; and existing
-snapshot, staging, installation, and hook guarantees.
+Evidence: required lint and all 30 behavioral tests passed on macOS with Python
+3.9.6 and 3.14.7. The separate npm recipe probe passed locally with Node 20/npm 10,
+including offline locked installation and staged-failure/repaired-source cases.
+Workflow YAML and local documentation links were checked.
 
-Three serial before/after timing trials in disposable repository copies measured
-median empty-commit latency of 6.636s -> 0.054s and first-check lint failure latency
-of 6.352s -> 0.113s. These are local measurements, not portable timing guarantees.
-
-Next: apply the reviewed files and commit through the harness, which reruns all
-required checks. This checkpoint accompanies that commit; read the log for its ID.
-Remote CI has not run; no remote is configured. No publication is authorized.
+Next: commit through the harness, back up and sanitize email metadata, then publish.
+GitHub CI and the v0.1.0 tag are subsequent external steps; inspect the repository's
+Actions results and tag for their final status. This checkpoint accompanies the
+release-preparation commit and does not assert that remote validation has passed.

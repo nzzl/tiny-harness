@@ -20,7 +20,9 @@
 - Configure real, relevant checks in checks.json. Use behavior-focused tests
   proportional to risk; do not add tests that merely restate implementation.
   Never weaken or remove a required check to make a failure disappear. A missing
-  prerequisite is a failure to resolve or report, never a silent skip.
+  prerequisite is a failure to resolve or report, never a silent skip. Ensure
+  project checks read snapshot source; inherited environments and editable installs
+  can otherwise redirect imports to code outside the staged tree.
 - Commit with `python3 .tiny-harness/run.py commit -m "Reason for this change"`.
   This validates the staged tree afresh, stopping at the first failed check;
   an empty commit exits before checks. For all ordinary check results, use
