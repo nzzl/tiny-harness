@@ -6,8 +6,8 @@ works with any agent that can read files and run commands. No service, model SDK
 global agent configuration, or background process is needed.
 
 Requires Git and Python 3.9+ on macOS or Linux. Uses only the Python standard
-library. Automated verification currently covers macOS with Python 3.10; other
-supported combinations should run the same tests before adoption.
+library. CI is configured for macOS and Linux with Python 3.9 and 3.14.
+Other combinations should run the same tests before adoption.
 
 ## Install into an existing repository
 
@@ -165,9 +165,39 @@ server-side enforcement, configure its existing CI/branch rules separately.
 ## This repository
 
 The contract is loaded through `AGENTS.md`; `.tiny-harness/TASK.md` records the
-build. `.tiny-harness/checks.json` invokes `tests/run.py`, which discovers the
-behavior tests and rejects zero discovered tests. Tests use disposable repositories, exercise failure and recovery,
-and invoke an installed copy without changing your Git settings.
+work. Required staged-tree checks run basic Python lint and `tests/run.py`, which
+discovers behavior tests and rejects zero discovered tests. Tests use disposable
+repositories, exercise failure and recovery, and invoke an installed copy without
+changing your Git settings.
+
+For development, create a virtual environment and install the pinned check tool:
+
+```sh
+python3 -m venv .venv
+. .venv/bin/activate
+python3 -m pip install -r requirements-dev.txt
+```
+
+Ruff checks common Python errors, undefined names, and unused imports/variables;
+formatting is not required. Its version is pinned in both `requirements-dev.txt`
+and `ruff.toml`; update them together. A missing or mismatched tool fails visibly.
+The harness runtime and installed copies still require only Git and Python's
+standard library. Adopting repositories configure their own checks.
+
+GitHub Actions runs the same canonical validation on macOS/Linux and Python
+3.9/3.14 for pushes and pull requests. Remote runs require publishing this workflow;
+merge enforcement additionally requires the repository's branch rules.
+
+CI also reports advisory production-code review triggers: files over 300 physical
+lines, functions over 50 physical lines, and McCabe complexity over 10. Tests are
+excluded from these size/complexity advisories. They do not block commits or CI;
+use a warning to assess readability, not automatically split code to meet a number.
+Run them locally from the repository root with:
+
+```sh
+python3 tests/size_warnings.py
+ruff check --no-cache --config ruff.toml --select C901 --exit-zero .tiny-harness
+```
 
 [Source notes](SOURCE-NOTES.md) describe the actual source and design reductions.
 New Tiny Harness code and documentation use the [MIT license](.tiny-harness/LICENSE).

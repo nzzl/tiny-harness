@@ -1,6 +1,11 @@
 {
   "checks": [
     {
+      "name": "basic Python lint",
+      "argv": ["ruff", "check", "--no-cache", "--config", "ruff.toml", ".tiny-harness", "tests"],
+      "timeout_seconds": 30
+    },
+    {
       "name": "runner behavior and disposable adoption",
       "argv": ["python3", "tests/run.py"],
       "timeout_seconds": 60
