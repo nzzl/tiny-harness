@@ -1,5 +1,9 @@
 # Tiny Harness
 
+[![Validate](https://github.com/nzzl/tiny-harness/actions/workflows/validate.yml/badge.svg?branch=master&event=push)](https://github.com/nzzl/tiny-harness/actions/workflows/validate.yml)
+[![Version](https://img.shields.io/github/v/tag/nzzl/tiny-harness?label=version&sort=semver)](https://github.com/nzzl/tiny-harness/tags)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](.tiny-harness/LICENSE)
+
 A small operating structure for coding agents: a contract, one task checkpoint,
 explicit checks, and a command that validates before making local commits. It
 works with any agent that can read files and run commands. No service, model SDK,
