@@ -1,6 +1,6 @@
 # Task
 
-Status: locally verified; validated commit pending
+Status: fix committed and locally verified; v0.1.1 publication pending
 
 ## Outcome and scope
 Fix check process leakage and reject symlinked configuration. Make changes to
@@ -21,5 +21,9 @@ and documentation. All 38 tests and required lint passed locally on Python 3.10.
 No production size or complexity warnings; runner is 276 lines. No new dependencies
 or permission flags. Tests cover passing/failing/timed-out/interrupted children,
 file/directory symlinks, normal commits, and staged/executing-runner warnings.
-Next: commit through the harness, which reruns required checks on the staged tree.
-Publication and tagging are outside this follow-up's scope.
+Fix committed as 75aa5ad after all 38 staged tests and required lint passed.
+The user subsequently authorized pushing the fix and tagging v0.1.1 only after
+all five GitHub CI jobs pass. No new features are part of this release.
+Next: push the release commit, verify CI for that exact commit, and publish the
+v0.1.1 tag. The Actions run and tag supply the final publication evidence; this
+checkpoint does not assert that those external steps have already completed.
