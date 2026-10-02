@@ -1,38 +1,25 @@
 # Task
 
-Status: locally verified; publication and remote CI pending
+Status: locally verified; validated commit pending
 
 ## Outcome and scope
-Prepare and publish nzzl/tiny-harness as a public v0.1 release after addressing
-adoption findings. Add tested Python/Node recipes and clarify snapshot/environment
-boundaries. Preserve the small generic runner and existing required checks.
-The repository was clean at c393cf0 when this task began.
-
-The user explicitly authorized replacing personal author/committer email addresses
-with their GitHub noreply address before publication. This overrides the contract's
-usual prohibition on history rewriting for this specific metadata-only operation.
-Preserve code/history structure and retain a local backup. Publish only sanitized
-history. Publish the v0.1.0 tag only after all configured GitHub CI jobs pass.
+Fix check process leakage and reject symlinked configuration. Make changes to
+validation visible with an advisory warning, without adding approval flags.
+The user authorized this follow-up after review. Preserve unrelated work.
+The repository was clean at e50d85e; v0.1.0 was already published after CI passed.
 
 ## Acceptance criteria
-- [x] Python example rejects editable-source false passes and external fallbacks.
-- [x] Node example installs locked dependencies, rejects staged failures, and recovers.
-- [x] Documentation states the inherited-environment boundary precisely.
-- [x] Required lint/tests and separate Node example pass locally.
-- [ ] Published author/committer email addresses use GitHub noreply.
-- [ ] GitHub CI passes before tagging v0.1.0.
+- [x] Same-group children are stopped after success, failure, timeout, and interruption.
+- [x] Configuration file/directory symlinks are rejected.
+- [x] Changes to staged checks/runner or the executing runner produce warnings.
+- [x] Normal changes remain quiet; warnings neither skip checks nor demand approval.
+- [x] Relevant regression tests and required lint/behavior checks pass.
 
 ## Checkpoint
-Prepared optional recipes, Python source-origin regressions, an offline npm fixture,
-and a dedicated Node CI job. The runner still installs only its original five
-files; adopting repositories explicitly select/configure their own checks.
-
-Evidence: required lint and all 30 behavioral tests passed on macOS with Python
-3.9.6 and 3.14.7. The separate npm recipe probe passed locally with Node 20/npm 10,
-including offline locked installation and staged-failure/repaired-source cases.
-Workflow YAML and local documentation links were checked.
-
-Next: commit through the harness, back up and sanitize email metadata, then publish.
-GitHub CI and the v0.1.0 tag are subsequent external steps; inspect the repository's
-Actions results and tag for their final status. This checkpoint accompanies the
-release-preparation commit and does not assert that remote validation has passed.
+Implemented cleanup, configuration boundary checks, advisory commit warnings,
+and documentation. All 38 tests and required lint passed locally on Python 3.10.14.
+No production size or complexity warnings; runner is 276 lines. No new dependencies
+or permission flags. Tests cover passing/failing/timed-out/interrupted children,
+file/directory symlinks, normal commits, and staged/executing-runner warnings.
+Next: commit through the harness, which reruns required checks on the staged tree.
+Publication and tagging are outside this follow-up's scope.

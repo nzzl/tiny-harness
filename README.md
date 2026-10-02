@@ -141,6 +141,26 @@ The runner rejects an unmerged index and detects index or HEAD changes during
 validation. Use one writer per repository while validating/committing; it does
 not lock out another process and a narrow check-to-commit race remains.
 
+## Check processes and changes to validation
+
+Each check runs in a separate process group. When it finishes, fails, times out,
+or is interrupted, the runner kills any remaining processes in that group before
+inspecting the snapshot or running another check. Processes that deliberately
+start a new session or leave the group escape cleanup; this is not a sandbox.
+
+Staged check configuration and its `.tiny-harness` directory cannot be symlinks.
+The configuration still comes from the proposed commit, so that commit can also
+change or weaken its own checks. The executing runner comes from the working
+tree. Before validating a commit, the runner warns about staged changes to
+`checks.json` or `run.py`, and about an executing runner different from HEAD.
+Initial adoption has no previous version to compare. Warnings require no flag
+or additional confirmation, and all configured checks still run normally.
+
+Review changes to validation deliberately. The warning cannot judge whether a
+change weakens a check, detect all changes to scripts invoked by checks, or stop
+an agent modifying the runner or bypassing it with plain Git. Strong enforcement
+requires independently controlled CI and branch protection/review rules.
+
 ## Recovery
 
 Read the checkpoint, actual Git status/diffs, and recent history; reconcile them

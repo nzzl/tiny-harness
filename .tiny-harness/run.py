@@ -63,6 +63,8 @@ def unique_object(pairs):
 
 def configuration(snapshot):
     path = snapshot / ".tiny-harness/checks.json"
+    if path.parent.is_symlink() or path.is_symlink():
+        raise Failure("Staged check configuration and its directory must not be symlinks.")
     try:
         config = json.loads(path.read_text(), object_pairs_hook=unique_object)
     except (OSError, ValueError) as error:
@@ -94,16 +96,19 @@ def run_check(check, snapshot):
     except OSError as error:
         print("FAIL " + check["name"] + ": " + str(error), flush=True)
         return False
+    code = None
     try:
         code = process.wait(timeout=check["timeout_seconds"])
-    except (subprocess.TimeoutExpired, KeyboardInterrupt) as error:
+    except subprocess.TimeoutExpired:
+        pass
+    finally:
+        # Stop same-group children even after their parent exits successfully.
         try:
             os.killpg(process.pid, signal.SIGKILL)
         except ProcessLookupError:
             pass
         process.wait()
-        if isinstance(error, KeyboardInterrupt):
-            raise
+    if code is None:
         print("FAIL " + check["name"] + ": timed out", flush=True)
         return False
     print(("PASS " if code == 0 else "FAIL ") + check["name"] + " (exit " + str(code) + ")", flush=True)
@@ -182,6 +187,19 @@ def validate(root, *, fail_fast=False):
     return tree, previous_head
 
 
+def warn_harness_changes(root):
+    if head(root) is None:
+        return
+    paths = (".tiny-harness/checks.json", ".tiny-harness/run.py")
+    changed = git(root, "diff", "--cached", "--name-only", "HEAD", "--", *paths).splitlines()
+    previous = git(root, "ls-tree", "HEAD", "--", paths[1]).split()
+    if previous and git(root, "hash-object", str(Path(__file__).resolve())) != previous[2]:
+        changed.append("executing runner differs from HEAD")
+    if changed:
+        print("WARNING: validation rules or runner changed: " + "; ".join(changed)
+              + ". Review these changes; passing checks do not prove standards were preserved.", flush=True)
+
+
 def commit(root, message):
     if not message.strip():
         raise Failure("A meaningful commit message is required.")
@@ -192,6 +210,7 @@ def commit(root, message):
     # A pending merge can record meaningful ancestry without changing the tree.
     if staged.returncode == 0 and not (root / git(root, "rev-parse", "--git-path", "MERGE_HEAD")).is_file():
         raise Failure("Nothing staged to commit; stage intended changes before committing.")
+    warn_harness_changes(root)
     tree, previous_head = validate(root, fail_fast=True)
     unchanged(root, tree, previous_head)
     result = subprocess.run(["git", "-C", str(root), "commit", "-m", message])
