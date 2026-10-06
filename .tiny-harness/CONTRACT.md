@@ -20,6 +20,13 @@
   named files or selected hunks; inspect the staged diff. Include only work you
   own or are explicitly authorized to include. Never reset, clean, force-push,
   amend, or otherwise discard/rewrite work to get unstuck.
+- For Python work, reuse the project's existing isolated environment and tooling
+  (such as uv, Poetry, Conda, or a development container). If Python dependencies
+  are needed and no isolated environment exists, create a local `.venv` and keep
+  it out of Git. Do not install project dependencies into the host's system Python.
+  Make the environment's tools available on PATH for checks; an ignored working-tree
+  `.venv` is absent from the staged snapshot. A project using only the harness's
+  standard-library runtime does not need an environment just for the harness.
 - Configure real, relevant checks in checks.json. Use behavior-focused tests
   proportional to risk; do not add tests that merely restate implementation.
   Never weaken or remove a required check to make a failure disappear. A missing

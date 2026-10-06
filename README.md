@@ -77,6 +77,16 @@ For pure-Python src-layout projects and Node/npm projects, start from the
 [tested adoption examples](examples/README.md). These are optional configurations;
 merge them with existing required checks rather than replacing those checks.
 
+For Python dependencies, reuse the project's isolated environment and package
+manager. If none exists, create a local `.venv`, exclude it from Git, and activate
+it before validation. Keep dependencies out of the host's system Python. Checks
+should resolve `python3` and other tools through that environment's PATH; a
+relative `.venv/bin/python` command cannot use the ignored environment inside the
+staged snapshot. Existing uv, Poetry, Conda, or container setups can be retained.
+This is an agent instruction, not a runner gate. Tiny Harness itself needs no venv
+or third-party Python packages. Environment isolation does not replace the source
+origin checks described in the adoption examples.
+
 Arguments do not undergo shell expansion. Use an explicit shell command only
 when necessary. Keep setup reproducible: a required check can invoke a tracked
 script that installs locked dependencies and runs tests. Missing prerequisites

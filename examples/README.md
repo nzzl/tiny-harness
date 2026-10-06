@@ -14,8 +14,12 @@ adopting repository. Add the check from [python-src/checks.json](python-src/chec
 and replace `your_package` with the actual import package name. If that script path
 already exists, review and merge it or choose a new path and update the command.
 
-Activate the project's virtual environment so `python3` and third-party dependencies
-are available on PATH. Use `python3` rather than a relative `.venv/bin/python` path:
+Reuse the project's isolated Python environment and existing package manager.
+If dependencies are needed and no environment exists, create one with
+`python3 -m venv .venv`, exclude `.venv/` from Git, and activate it with
+`. .venv/bin/activate`. Avoid installing dependencies into the host's system Python.
+Make `python3` and third-party tools available on PATH when running checks.
+Use `python3` rather than a relative `.venv/bin/python` path:
 the ignored virtual environment is absent from the temporary snapshot. Provision
 third-party dependencies from your lock file before validation, or through an
 explicit setup step appropriate to the project.
