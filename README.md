@@ -2,7 +2,7 @@
 
 [![Validate](https://github.com/nzzl/tiny-harness/actions/workflows/validate.yml/badge.svg?branch=master&event=push)](https://github.com/nzzl/tiny-harness/actions/workflows/validate.yml)
 [![Version](https://img.shields.io/github/v/tag/nzzl/tiny-harness?label=version&sort=semver)](https://github.com/nzzl/tiny-harness/tags)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](.tiny-harness/LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A small operating structure for coding agents: a contract, one task checkpoint,
 explicit checks, and a command that validates before making local commits. It
@@ -204,6 +204,13 @@ repository before running its checks. No daemon, universal hook, remote CI gate,
 test-quality oracle, or authorization engine is installed. If a project needs
 server-side enforcement, configure its existing CI/branch rules separately.
 
+## Contributing and reporting
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, checks, and pull requests, and
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for participation expectations.
+Report bugs through [issues](https://github.com/nzzl/tiny-harness/issues/new/choose).
+For suspected vulnerabilities, follow [SECURITY.md](SECURITY.md).
+
 ## This repository
 
 The contract is loaded through `AGENTS.md`; `.tiny-harness/TASK.md` records the
@@ -246,6 +253,6 @@ ruff check --no-cache --config ruff.toml --select C901 --exit-zero .tiny-harness
 ```
 
 [Source notes](SOURCE-NOTES.md) describe the actual source and design reductions.
-New Tiny Harness code and documentation use the [MIT license](.tiny-harness/LICENSE).
+New Tiny Harness code and documentation use the [MIT license](LICENSE).
 The installer carries that notice into adopted repositories. No upstream source
 license is asserted or changed.

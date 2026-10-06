@@ -1,19 +1,29 @@
 # Task
 
-Status: README badges verified; commit and publication pending
+Status: community files prepared; validation and publication pending
 
 ## Outcome and scope
-Add CI status, latest version tag, and MIT license badges to the README and push
-the update. Repository was clean at b6b79d7. That CI maintenance commit passed
-all five GitHub checks with the Node 20 warning removed. No runtime changes.
+Add lightweight contributor and reporting guidance, a root license, and GitHub
+issue/PR templates. Enable private vulnerability reporting and publish the files.
+The user authorized this community-checklist follow-up. Repository was clean at
+ac48e74; the README badge commit already passed all five CI jobs.
 
 ## Acceptance criteria
-- [x] Add three linked badges immediately below the README title.
-- [x] Verify badge images show passing validation, v0.1.1, and MIT.
-- [ ] Commit through the harness and publish the README update.
+- [x] Root LICENSE matches the installed MIT notice exactly.
+- [x] Contribution instructions reuse the existing workflow without new gates.
+- [x] Concise bug-report/PR templates and README links are prepared.
+- [x] Security policy states trust boundaries and links to private GitHub reporting.
+- [x] Conduct guidance names the maintainer and distinguishes public moderation
+      from GitHub Support's private abuse reports; no private inbox is invented.
+- [x] Private vulnerability reporting is enabled and verified via GitHub API.
+- [x] Local documentation links, license equality, and template YAML verified.
+- [ ] Required staged checks pass.
+- [ ] Publish and verify GitHub community detection and CI.
 
 ## Checkpoint
-Verified all three badge images load. CI tracks master push runs; the version
-badge follows tags rather than requiring a GitHub Release. The license links to
-the existing MIT file. Next: required staged validation, commit, push, and confirm
-GitHub CI for the published commit. Actions results provide final verification.
+Prepared documentation only, preserving the installed license and all runtime
+checks. GitHub private vulnerability reporting is enabled. Blank issues remain
+available. No mandatory contribution checklist,
+response SLA, or new development dependency. Next: commit through the harness,
+push, and inspect GitHub's profile and CI.
+Final external results are supplied by the community profile and Actions run.
