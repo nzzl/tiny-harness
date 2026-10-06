@@ -18,7 +18,8 @@ Reuse the project's isolated Python environment and existing package manager.
 If dependencies are needed and no environment exists, create one with
 `python3 -m venv .venv`, exclude `.venv/` from Git, and activate it with
 `. .venv/bin/activate`. Avoid installing dependencies into the host's system Python.
-Make `python3` and third-party tools available on PATH when running checks.
+Make `python3` and third-party tools available on PATH in the same command that
+runs the harness (activate and run together, or use a runner such as `uv run`).
 Use `python3` rather than a relative `.venv/bin/python` path:
 the ignored virtual environment is absent from the temporary snapshot. Provision
 third-party dependencies from your lock file before validation, or through an

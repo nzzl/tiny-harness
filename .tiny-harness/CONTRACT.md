@@ -24,7 +24,9 @@
   (such as uv, Poetry, Conda, or a development container). If Python dependencies
   are needed and no isolated environment exists, create a local `.venv` and keep
   it out of Git. Do not install project dependencies into the host's system Python.
-  Make the environment's tools available on PATH for checks; an ignored working-tree
+  Put the environment's tools on PATH in the same command that runs the harness
+  (activate and run together, or use the tool's runner such as `uv run`); an
+  activation in an earlier shell may not carry over. An ignored working-tree
   `.venv` is absent from the staged snapshot. A project using only the harness's
   standard-library runtime does not need an environment just for the harness.
 - Configure real, relevant checks in checks.json. Use behavior-focused tests
@@ -73,4 +75,6 @@ These instructions depend on the agent reading and following them. The runner
 rejects missing/malformed/empty check configuration and unsuccessful checks;
 its commit command validates first. It does not judge test quality, task truth,
 authorization, or deliberate staging. Plain Git bypasses it. Existing hooks run
-normally and may reject a commit. See README for snapshot and concurrency limits.
+normally and may reject a commit. Checks see the staged snapshot plus inherited
+environment and tools, with empty stdin; use one writer per repository while
+validating or committing. Details: https://github.com/nzzl/tiny-harness#what-validation-checks

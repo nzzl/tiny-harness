@@ -105,7 +105,8 @@ def configuration(snapshot):
 def run_check(check, snapshot):
     print("RUN " + check["name"] + ": " + json.dumps(check["argv"]), flush=True)
     try:
-        process = subprocess.Popen(check["argv"], cwd=snapshot, start_new_session=True)
+        process = subprocess.Popen(check["argv"], cwd=snapshot, start_new_session=True,
+                                   stdin=subprocess.DEVNULL)
     except OSError as error:
         print("FAIL " + check["name"] + ": " + str(error), flush=True)
         return False

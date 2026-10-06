@@ -78,8 +78,12 @@ For pure-Python src-layout projects and Node/npm projects, start from the
 merge them with existing required checks rather than replacing those checks.
 
 For Python dependencies, reuse the project's isolated environment and package
-manager. If none exists, create a local `.venv`, exclude it from Git, and activate
-it before validation. Keep dependencies out of the host's system Python. Checks
+manager. If none exists, create a local `.venv` and exclude it from Git. Activate
+it in the same shell command that runs the harness, for example
+`. .venv/bin/activate && python3 .tiny-harness/run.py validate`, or run the harness
+through the tool's runner, such as `uv run` or `poetry run`. Agent tools that start
+a fresh shell per command do not keep an earlier activation. Keep dependencies out
+of the host's system Python. Checks
 should resolve `python3` and other tools through that environment's PATH; a
 relative `.venv/bin/python` command cannot use the ignored environment inside the
 staged snapshot. Existing uv, Poetry, Conda, or container setups can be retained.
@@ -178,6 +182,11 @@ the runner also trigger check cleanup and removal of the temporary snapshot.
 SIGKILL and other uncatchable termination cannot trigger cleanup. Processes that
 deliberately start a new session or leave the group escape cleanup; this is not
 a sandbox.
+
+Checks are noninteractive. Their standard input is empty (`/dev/null`), and they
+have no controlling terminal, so a prompt cannot read from the caller's terminal
+or input. Most reads end immediately at end of input; a command that ignores it
+waits until its timeout. Configure tools with their noninteractive or CI options.
 
 Staged check configuration and its `.tiny-harness` directory cannot be symlinks.
 The configuration still comes from the proposed commit, so that commit can also

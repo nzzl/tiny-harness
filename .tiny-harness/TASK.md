@@ -1,28 +1,29 @@
 # Task
 
-Status: termination cleanup fixed; required staged validation and local commit pending
+Status: cleanup pass implemented; required staged validation and local commit pending
 
 ## Outcome and scope
-Fix audit finding F1: SIGTERM and SIGHUP must unwind active validation, stop the
-check process group, and remove the temporary snapshot. Preserve conventional
-signal exit codes and existing SIGINT behavior. No new dependencies or operator
-steps. Leave the lower-priority installed README link and stdin behavior unchanged.
-Source checkout was clean at 614d176; runtime matches the audited 2aa8a18.
+Final small cleanup after the audit: make the installed contract's limits reference
+work from adopting repositories, decide check stdin behavior from evidence, and fix
+concrete problems in 614d176's Python environment guidance. Local commit only; no
+push or release. Leave the verified signal cleanup unchanged.
+Repository was clean at 33c1c09, which is published (CI run passed).
 
 ## Acceptance criteria
-- [x] Regression reproduces leaked processes in validate and commit before the fix.
-- [x] SIGTERM to runner/group, SIGHUP, and SIGINT clean up in both commands.
-- [x] Interrupted validation leaves HEAD and index unchanged and never reports success.
-- [x] README states supported signals and the uncatchable-termination limitation.
-- [ ] Required staged checks pass and change is committed through the harness.
+- [x] Installed contract states snapshot/environment/concurrency limits inline and
+      links the upstream README section instead of an uninstalled "README".
+- [x] Checks receive empty stdin; regression test fails on the previous runner
+      (timed out) and passes now; README documents EOF behavior and its limits.
+- [x] 614d176 guidance: activation must happen in the command that runs the harness.
+- [ ] Required checks pass and the change is committed through the harness.
 
 ## Checkpoint
-The preceding environment-guidance change 614d176 is published; all five jobs
-passed in https://github.com/nzzl/tiny-harness/actions/runs/37464956254.
-In a disposable clone, SIGTERM regression failed before the fix in both commands
-because surviving processes held output pipes open. Regression cleanup removed
-its processes and snapshots. With the fix, four tests covering eight cases pass
-on Python 3.14.7. Ruff, complexity, and size checks pass without warnings.
-Next: run required staged checks through the commit command and inspect Git state.
-Commit output is the final validation evidence. Publication is not part of this
-local fix; do not repeat or infer publication from this checkpoint.
+Stdin evidence (disposable fixtures, macOS, Python 3.10): with an idle terminal or
+idle open pipe, the old runner let `read` and `input()` checks wait until timeout;
+with /dev/null they end at EOF (EOF-tolerant reads pass, prompts fail immediately).
+Opening /dev/tty already failed (checks have no controlling terminal). EOF-ignoring
+loops still reach their timeout. No documented example relies on check stdin.
+Environment evidence: harness runs without any venv; activation in an earlier
+separate shell does not reach checks; same-command activation, `uv run` (0.8.22),
+and `poetry run` (1.4.1) do. Conda and containers were not exercised.
+Next: commit through the harness; commit output is the validation evidence.

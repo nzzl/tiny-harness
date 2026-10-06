@@ -169,6 +169,24 @@ class HarnessTests(unittest.TestCase):
                 self.git("add", ".tiny-harness/checks.json")
                 self.assert_failed(self.harness("commit", "-m", "Must fail"), evidence)
 
+    def test_checks_get_empty_input_while_caller_input_stays_open(self):
+        self.configure("import sys; assert sys.stdin.read() == ''", timeout=10)
+        process = subprocess.Popen([sys.executable, str(RUNNER), "validate"], cwd=self.root,
+                                   env=self.env, text=True, stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        try:
+            process.stdin.write("caller input\n")
+            process.stdin.flush()
+            output = process.stdout.read()
+            self.assertEqual(process.wait(timeout=20), 0, output)
+            self.assertIn("PASS all 1 required checks", output)
+        finally:
+            process.stdin.close()
+            if process.poll() is None:
+                process.kill()
+            process.wait()
+            process.stdout.close()
+
     def test_unstaged_fix_cannot_mask_staged_failure(self):
         self.configure("from pathlib import Path; assert Path('value').read_text() == 'good'")
         value = self.root / "value"
