@@ -171,10 +171,13 @@ not lock out another process and a narrow check-to-commit race remains.
 
 ## Check processes and changes to validation
 
-Each check runs in a separate process group. When it finishes, fails, times out,
-or is interrupted, the runner kills any remaining processes in that group before
-inspecting the snapshot or running another check. Processes that deliberately
-start a new session or leave the group escape cleanup; this is not a sandbox.
+Each check runs in a separate process group. When it finishes, fails, or times
+out, the runner kills any remaining processes in that group before inspecting
+the snapshot or running another check. SIGINT (Ctrl-C), SIGTERM, and SIGHUP to
+the runner also trigger check cleanup and removal of the temporary snapshot.
+SIGKILL and other uncatchable termination cannot trigger cleanup. Processes that
+deliberately start a new session or leave the group escape cleanup; this is not
+a sandbox.
 
 Staged check configuration and its `.tiny-harness` directory cannot be symlinks.
 The configuration still comes from the proposed commit, so that commit can also

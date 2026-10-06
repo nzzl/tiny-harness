@@ -39,6 +39,14 @@ class Failure(Exception):
     pass
 
 
+class Interrupted(BaseException):
+    pass
+
+
+def interrupt(signum, _frame):
+    raise Interrupted(signum)
+
+
 def git(root, *args, env=None):
     result = subprocess.run(["git", "-C", str(root), *args], env=env,
                             text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -259,6 +267,8 @@ def main():
     installing = commands.add_parser("install", help="add the harness to an existing Git repository")
     installing.add_argument("target", type=Path)
     args = parser.parse_args()
+    for signum in (signal.SIGTERM, signal.SIGHUP):
+        signal.signal(signum, interrupt)
     try:
         if args.command == "install":
             install(args.target)
@@ -271,9 +281,9 @@ def main():
     except (Failure, OSError) as error:
         print("ERROR: " + str(error), file=sys.stderr, flush=True)
         return 1
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, Interrupted) as error:
         print("ERROR: interrupted; validation is incomplete. Inspect task and Git state before resuming.", file=sys.stderr)
-        return 130
+        return 128 + error.args[0] if isinstance(error, Interrupted) else 130
     return 0
 
 
