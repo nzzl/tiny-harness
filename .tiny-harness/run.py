@@ -20,12 +20,17 @@ Status: ready
 
 ## Outcome and scope
 Replace with the authorized outcome and boundaries before implementation.
+For multi-session work, reference the existing backlog or feature checklist here;
+preserve unfinished requirements when replacing this task.
 
 ## Acceptance criteria
 - [ ] Replace with observable success criteria.
 
 ## Checkpoint
 Record existing changes, decisions, checks and results, failures, and next action.
+For verification, include the tested revision/environment and evidence location.
+For pending external steps, record the action and where its result can be checked.
+On resumption, reconcile these notes with Git and external results before acting.
 Update before a handoff or interruption and at meaningful milestones.
 """
 

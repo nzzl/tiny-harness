@@ -110,6 +110,20 @@ Keep commits coherent. A checkpoint committed with a change can say that commit
 validation is pending; the command output supplies the result. Report the new
 commit ID at handoff without creating an endless bookkeeping commit loop.
 
+## Work across multiple sessions
+
+For a project spanning several tasks, keep unfinished requirements in an existing
+backlog or a persistent feature checklist linked from `TASK.md`. Record observable
+acceptance steps and their verification evidence. On resumption, reconcile the
+checkpoint with Git and external results, then choose the next bounded item.
+Use a relevant smoke check when implementation state is uncertain; avoid repeating
+unrelated checks. A passing commit alone does not establish project completion.
+
+See the optional [long-running-project recipe](examples/long-running/README.md)
+and [feature checklist template](examples/long-running/FEATURES.md). These are
+instructions, not additional runner enforcement, and are not copied by install.
+Small changes can continue using the ordinary task checkpoint.
+
 ## What validation checks
 
 The runner freezes the Git index into a tree and checks out a fresh temporary

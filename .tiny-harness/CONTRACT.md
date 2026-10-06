@@ -8,6 +8,9 @@
 - Record the outcome, boundaries, observable acceptance criteria, and existing
   changes in TASK.md. Keep one compact checkpoint: decisions, evidence, unresolved
   failures, and next action. Never mark an incomplete task or check as passed.
+  For work spanning multiple tasks or sessions, reference an existing project
+  backlog or keep a small persistent feature checklist. Preserve unfinished
+  requirements when replacing the current task; record authorized scope changes.
 - Implement, test, diagnose, repair, and make local commits autonomously within
   the authorized task. Ask only for missing information that blocks progress or
   consequential actions outside existing authorization (for example publication,
@@ -20,9 +23,12 @@
 - Configure real, relevant checks in checks.json. Use behavior-focused tests
   proportional to risk; do not add tests that merely restate implementation.
   Never weaken or remove a required check to make a failure disappear. A missing
-  prerequisite is a failure to resolve or report, never a silent skip. Ensure
-  project checks read snapshot source; inherited environments and editable installs
-  can otherwise redirect imports to code outside the staged tree.
+  prerequisite is a failure to resolve or report, never a silent skip.
+  Verify changed user-visible behavior through the relevant interface when
+  appropriate; unit checks alone do not establish end-to-end completion. Record
+  the result and tested revision/environment, or the remaining verification gap.
+  Project checks must read snapshot source; inherited environments and editable
+  installs can otherwise redirect imports to code outside the staged tree.
 - Commit with `python3 .tiny-harness/run.py commit -m "Reason for this change"`.
   This validates the staged tree afresh, stopping at the first failed check;
   an empty commit exits before checks. For all ordinary check results, use
@@ -33,10 +39,19 @@
   blocked by unavailable access, a prerequisite, or an unresolved decision,
   record exact evidence and the smallest needed intervention; do independent work.
 - On resumption, read TASK.md, Git status, staged/unstaged diffs, and recent log.
-  Reconcile the checkpoint with actual files before proceeding. Do not repeat an
-  external action or create duplicate commits merely because the record is stale.
+  Read the referenced backlog if present. Reconcile notes with actual files and
+  authoritative external results before proceeding; inspect recorded CI runs or
+  published refs before repeating a push, deployment, or release. For resumed
+  implementation, use the smallest relevant smoke check when behavior or evidence
+  is uncertain, then choose the next bounded piece of unfinished work. Avoid
+  repeating completed checks solely to regain context; required commit validation
+  still runs.
+  Do not repeat external actions or create duplicate commits just to refresh notes.
 - Before handoff, update the checkpoint and report completed work, check results,
   commit identifiers, remaining failures/limitations, and next action if any.
+  Include pending external steps and how the next session can verify their result.
+  A finished task does not complete the project while required features or
+  acceptance steps remain unverified.
 
 ## Preferences (adapt with a reason)
 

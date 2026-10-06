@@ -1,9 +1,10 @@
 # Adoption examples
 
-These are optional project checks, not extra harness runtime dependencies. Install
-Tiny Harness first, then adapt an example to your project's existing requirements.
-Merge check entries into `.tiny-harness/checks.json`; preserve existing required
-checks. Stage the configuration, check scripts, source, tests, and dependency locks.
+These are optional project checks and workflow recipes, not extra harness runtime
+dependencies. Install Tiny Harness first, then adapt an example to your project's
+existing requirements. For check examples, merge entries into
+`.tiny-harness/checks.json`; preserve existing required checks. Stage the
+configuration, check scripts, source, tests, and dependency locks.
 
 ## Pure-Python src layout with unittest
 
@@ -51,3 +52,10 @@ The automated example probe uses a tracked local dependency to avoid registry
 access. It proves that missing dependencies are installed, staged bad source fails,
 and a staged repair passes. It does not establish compatibility with every npm
 workspace, native addon, external service, or network setup.
+
+## Work across multiple sessions
+
+The [long-running-project recipe](long-running/README.md) shows how to retain an
+existing backlog, resume from evidence, verify user-visible behavior, and leave a
+useful handoff. It includes an optional [feature checklist](long-running/FEATURES.md).
+This adds no required checks or files to the installed harness.
