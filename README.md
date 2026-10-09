@@ -73,6 +73,17 @@ zero discovered tests and avoid cached no-op runs where appropriate. The harness
 cannot infer that a green command actually tested anything. Add broader checks
 when risk warrants them; never remove a required check merely to obtain green.
 
+Passing checks show that their encoded expectations were satisfied, not that
+those expectations are correct. Tests that capture current behavior can protect
+against unintended changes, but should be identified as such when that behavior
+has not been independently justified. Coverage and mutation scores help assess
+tests; neither proves correctness.
+
+For example, a cleanup check should observe that child processes stop and
+temporary files disappear, rather than only checking for a “cleanup complete”
+message. Where practical, demonstrate that it detects the original leak and
+passes with the fix.
+
 For pure-Python src-layout projects and Node/npm projects, start from the
 [tested adoption examples](examples/README.md). These are optional configurations;
 merge them with existing required checks rather than replacing those checks.

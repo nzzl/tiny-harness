@@ -1,26 +1,31 @@
 # Task
 
-Status: cleanup instruction added; required staged validation and local commit pending
+Status: test-quality guidance added; required staged validation and local commit pending
 
 ## Outcome and scope
-Add a compact agent instruction to clean up task-owned temporary files and
-background processes before handoff when they are no longer needed. Preserve
-user files, unrelated work, deliverables, and evidence for unresolved failures.
-Report retained resources so the next operator can identify them.
-The user authorized this contract change. Source was clean at 3443599.
-No runner changes, automatic deletion, new commands, or additional setup.
+Add approved test-quality guidance so agents ground expectations in justified
+sources rather than current implementation output, investigate failing tests
+before changing expectations, and, where practical, confirm that important checks
+detect their intended failure. Documentation only: CONTRACT.md testing bullet
+replaced with four approved bullets; two README paragraphs added under
+"Configure real checks". The user authorized this change. Source was clean at
+ffee0ae (v0.1.2). No runner, check, test, installer, CI, or dependency changes;
+no new enforcement, thresholds, tools, or approval steps. No push, tag, or release.
 
 ## Acceptance criteria
-- [x] Contract requires cleanup of identifiable task-owned resources only.
-- [x] Useful work and failure evidence are preserved; retained resources are reported.
-- [x] Existing runtime cleanup and default installation remain unchanged.
+- [x] CONTRACT.md testing bullet replaced by the four approved bullets; surrounding
+      instructions unchanged.
+- [x] README paragraphs inserted after "Use relevant, proportionate checks...",
+      which is retained.
+- [x] Required-check, missing-prerequisite, staged-source, and commit-validation
+      safeguards retained; justified test corrections and "where practical"
+      qualifications preserved.
 - [ ] Required staged checks pass and a local commit is made through the harness.
 
 ## Checkpoint
-The preceding cleanup pass is committed and published as 3443599; all five jobs
-passed in https://github.com/nzzl/tiny-harness/actions/runs/37467822605.
-This change is agent guidance only. No tests were added for prose; required
-validation will run during commit using the existing project virtual environment.
+The previous cleanup-instruction task is committed as ffee0ae and published as
+v0.1.2; its pending commit note was stale. This change is prose only; no tests
+were added for prose. Required validation runs during commit using the existing
+project `.venv`.
 Next: inspect the staged diff, commit through the harness, and verify Git state.
-Commit output supplies final validation evidence. No push is requested for this
-change; publication remains a separate step.
+Publication remains a separate step.

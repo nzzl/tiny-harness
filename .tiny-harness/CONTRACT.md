@@ -30,14 +30,28 @@
   `.venv` is absent from the staged snapshot. A project using only the harness's
   standard-library runtime does not need an environment just for the harness.
 - Configure real, relevant checks in checks.json. Use behavior-focused tests
-  proportional to risk; do not add tests that merely restate implementation.
-  Never weaken or remove a required check to make a failure disappear. A missing
+  proportional to risk. Reuse or strengthen existing tests when sufficient; add
+  tests for meaningful missing coverage, not merely to increase test count. Never
+  weaken or remove a required check to make a failure disappear. A missing
   prerequisite is a failure to resolve or report, never a silent skip.
-  Verify changed user-visible behavior through the relevant interface when
-  appropriate; unit checks alone do not establish end-to-end completion. Record
-  the result and tested revision/environment, or the remaining verification gap.
-  Project checks must read snapshot source; inherited environments and editable
-  installs can otherwise redirect imports to code outside the staged tree.
+- Ground expected behavior in requirements, documented contracts, established
+  properties, or a justified reference. Do not treat the implementation's current
+  output as sufficient evidence of correctness. Investigate failures before
+  changing expectations; correct an expectation when evidence shows the test is
+  wrong or the requirement has changed. Record non-obvious reasons in the test or
+  existing task notes. Resolve consequential ambiguity rather than encoding a
+  guess as fact.
+- For bug fixes, where practical, show that a focused regression check fails for
+  the intended reason before the fix and passes afterward. For new checks
+  protecting critical behavior, use a safe negative case or controlled fault where
+  practical to confirm detection. Report limitations when this cannot be
+  demonstrated.
+- Verify changed user-visible behavior through the relevant interface when
+  appropriate. Distinguish observations from automated pass/fail checks, and
+  mocked or simulated results from verification of the actual system. Record the
+  tested revision, environment, result, and remaining gaps. Project checks must
+  read snapshot source; inherited environments and editable installs can
+  otherwise redirect imports to code outside the staged tree.
 - Commit with `python3 .tiny-harness/run.py commit -m "Reason for this change"`.
   This validates the staged tree afresh, stopping at the first failed check;
   an empty commit exits before checks. For all ordinary check results, use
