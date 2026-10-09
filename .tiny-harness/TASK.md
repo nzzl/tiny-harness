@@ -1,29 +1,26 @@
 # Task
 
-Status: cleanup pass implemented; required staged validation and local commit pending
+Status: cleanup instruction added; required staged validation and local commit pending
 
 ## Outcome and scope
-Final small cleanup after the audit: make the installed contract's limits reference
-work from adopting repositories, decide check stdin behavior from evidence, and fix
-concrete problems in 614d176's Python environment guidance. Local commit only; no
-push or release. Leave the verified signal cleanup unchanged.
-Repository was clean at 33c1c09, which is published (CI run passed).
+Add a compact agent instruction to clean up task-owned temporary files and
+background processes before handoff when they are no longer needed. Preserve
+user files, unrelated work, deliverables, and evidence for unresolved failures.
+Report retained resources so the next operator can identify them.
+The user authorized this contract change. Source was clean at 3443599.
+No runner changes, automatic deletion, new commands, or additional setup.
 
 ## Acceptance criteria
-- [x] Installed contract states snapshot/environment/concurrency limits inline and
-      links the upstream README section instead of an uninstalled "README".
-- [x] Checks receive empty stdin; regression test fails on the previous runner
-      (timed out) and passes now; README documents EOF behavior and its limits.
-- [x] 614d176 guidance: activation must happen in the command that runs the harness.
-- [ ] Required checks pass and the change is committed through the harness.
+- [x] Contract requires cleanup of identifiable task-owned resources only.
+- [x] Useful work and failure evidence are preserved; retained resources are reported.
+- [x] Existing runtime cleanup and default installation remain unchanged.
+- [ ] Required staged checks pass and a local commit is made through the harness.
 
 ## Checkpoint
-Stdin evidence (disposable fixtures, macOS, Python 3.10): with an idle terminal or
-idle open pipe, the old runner let `read` and `input()` checks wait until timeout;
-with /dev/null they end at EOF (EOF-tolerant reads pass, prompts fail immediately).
-Opening /dev/tty already failed (checks have no controlling terminal). EOF-ignoring
-loops still reach their timeout. No documented example relies on check stdin.
-Environment evidence: harness runs without any venv; activation in an earlier
-separate shell does not reach checks; same-command activation, `uv run` (0.8.22),
-and `poetry run` (1.4.1) do. Conda and containers were not exercised.
-Next: commit through the harness; commit output is the validation evidence.
+The preceding cleanup pass is committed and published as 3443599; all five jobs
+passed in https://github.com/nzzl/tiny-harness/actions/runs/37467822605.
+This change is agent guidance only. No tests were added for prose; required
+validation will run during commit using the existing project virtual environment.
+Next: inspect the staged diff, commit through the harness, and verify Git state.
+Commit output supplies final validation evidence. No push is requested for this
+change; publication remains a separate step.

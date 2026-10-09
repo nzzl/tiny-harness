@@ -56,6 +56,11 @@
   repeating completed checks solely to regain context; required commit validation
   still runs.
   Do not repeat external actions or create duplicate commits just to refresh notes.
+- Before handoff, remove temporary files and stop background processes created
+  for the task when they are no longer needed. Limit cleanup to resources you can
+  identify as your own; preserve user files, unrelated work, requested deliverables,
+  and evidence needed to reproduce unresolved failures. Report anything deliberately
+  retained or left running, with its location or process identifier and the reason.
 - Before handoff, update the checkpoint and report completed work, check results,
   commit identifiers, remaining failures/limitations, and next action if any.
   Include pending external steps and how the next session can verify their result.
