@@ -4,10 +4,35 @@
 [![Version](https://img.shields.io/github/v/tag/nzzl/tiny-harness?label=version&sort=semver)](https://github.com/nzzl/tiny-harness/tags)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-A small operating structure for coding agents: a contract, one task checkpoint,
-explicit checks, and a command that validates before making local commits. It
-works with any agent that can read files and run commands. No service, model SDK,
-global agent configuration, or background process is needed.
+A small utility that validates changes before they are committed. It also gives
+coding agents a set of instructions and one task checkpoint. Its commit command
+runs the project's configured checks on the staged snapshot, which is exactly
+the content that the commit will contain. If any check fails, it does not make
+the commit. It works with any agent that can read files and run commands. No
+service, model SDK, global agent configuration, or background process is needed.
+
+This protection works only when the agent uses the commit command. A plain
+`git commit` bypasses it. The instructions work only when the agent follows
+them. Passing checks show only that the configured checks passed, not that the
+change is correct. See [Limits and enforcement](#limits-and-enforcement).
+
+## When to use it
+
+Tiny Harness may be useful when a project needs its configured checks to run on
+the staged snapshot before every local commit. For example, an agent may commit
+while unstaged or untracked work in the same checkout would change the test
+result. A project that already has an equivalent safeguard, such as a
+pre-commit hook that tests the staged content, may not need the additional
+workflow.
+
+CI usually runs after a push, on commits that already exist. Tiny Harness runs
+locally, before the commit exists. It does not replace CI or branch protection.
+
+In a [small evaluation](docs/tiny-harness-evaluation-2026-10-29.md) of six
+Claude Code sessions, sessions with and without Tiny Harness passed all three
+scenarios. The sessions with Tiny Harness used about twice the time, tool calls,
+and output tokens. These trials showed no benefit. They were few and easy, so
+the result does not settle the question for other settings.
 
 Requires Git and Python 3.9+ on macOS or Linux. Uses only the Python standard
 library. CI is configured for macOS and Linux with Python 3.9 and 3.14.

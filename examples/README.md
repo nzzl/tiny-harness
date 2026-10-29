@@ -70,4 +70,6 @@ This adds no required checks or files to the installed harness.
 The [context-brief pilot](context-brief/README.md) adds optional checkpoint
 fields, a recipe that keeps long check logs, and a read-only script. The script
 reports which referenced files changed since a recorded commit. It is an
-unevaluated experiment, not part of the installed harness or its validation.
+optional experiment, not part of the installed harness or its validation. In a
+small evaluation, offering it showed no benefit. Its effect when actually run is
+untested.

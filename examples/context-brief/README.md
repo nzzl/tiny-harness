@@ -6,9 +6,12 @@ and a read-only script that prints a short brief. The installer does not copy
 this example. It does not change the contract, the TASK template, the runner,
 or validation.
 
-No evaluation shows that this pilot helps agents. The tests show only that the
-script reports what it claims. Use it as an experiment. If it does not help,
-remove it.
+This pilot is experimental and optional. In a
+[small evaluation](../../docs/tiny-harness-evaluation-2026-10-29.md#context-brief-pilot),
+the agents that were offered the brief did not run it, and offering it showed no
+benefit. Its effect when an agent actually runs it has not been tested. The
+tests show only that the script reports what it claims. Use it as an
+experiment. If it does not help, remove it.
 
 ## The problem it addresses
 
@@ -114,10 +117,10 @@ configuration. It returns the exact exit status of validation.
     log="$(mktemp "$dir/validate-$(date -u +%Y%m%dT%H%M%SZ)-XXXXXX")" ||
     { echo "Log setup failed. Validation did not run." >&2; exit 125; }
   python3 .tiny-harness/run.py validate >"$log" 2>&1
-  status=$?
-  echo "validate exit $status; log: $log"
+  validation_exit_code=$?
+  echo "validate exit $validation_exit_code; log: $log"
   grep -nE '^(RUN|PASS|FAIL|ERROR|WARNING)' "$log" | tail -n 40
-  exit "$status"
+  exit "$validation_exit_code"
 )
 ```
 
@@ -129,6 +132,8 @@ The recipe has these properties:
 - If setup fails, the recipe prints a message and returns 125 without running
   validation.
 - The `grep` line shows the result lines of the runner.
+- It avoids variable names that zsh reserves, such as `status`. The tests run it
+  with `sh` and with zsh when zsh is installed.
 
 Record the log path in an `Evidence:` line, with the few lines that matter. For a
 commit, replace `validate` with `commit -m "..."` in the runner command.

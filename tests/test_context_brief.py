@@ -3,6 +3,7 @@ import importlib.util
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -369,6 +370,8 @@ class ContextBriefTests(unittest.TestCase):
 class LogRecipeTests(unittest.TestCase):
     """Run the documented shell recipe exactly as the README shows it."""
 
+    shell_argv = ["sh", "-c"]
+
     def setUp(self):
         text = (EXAMPLE / "README.md").read_text(encoding="utf-8")
         blocks = [block for block in re.findall(r"```sh\n(.*?)```", text, re.DOTALL)
@@ -389,7 +392,7 @@ class LogRecipeTests(unittest.TestCase):
             "print('FAIL fixture (exit 7)')\nsys.exit(7)\n")
 
     def shell(self, script, cwd=None):
-        return subprocess.run(["sh", "-c", script], cwd=cwd or self.root, env=self.env,
+        return subprocess.run(self.shell_argv + [script], cwd=cwd or self.root, env=self.env,
                               capture_output=True, text=True, timeout=20)
 
     def logs(self):
@@ -410,7 +413,9 @@ class LogRecipeTests(unittest.TestCase):
         self.assertEqual(log.read_bytes(), content)
 
     def test_caller_shell_continues_and_keeps_its_options(self):
-        result = self.shell("set -u\n" + self.recipe + "\necho \"after $?\"\ncase $- in *u*) echo kept;; esac\n")
+        # The recipe's `set +e` must stay inside its subshell; every caller option survives.
+        result = self.shell("set -u\ncaller_options=$-\n" + self.recipe + "\necho \"after $?\"\n"
+                            "[ \"$caller_options\" = \"$-\" ] && case $- in *u*) echo kept;; esac\n")
         self.assertIn("after 7", result.stdout)
         self.assertIn("kept", result.stdout)
 
@@ -424,6 +429,18 @@ class LogRecipeTests(unittest.TestCase):
         self.assertEqual(result.returncode, 125)
         self.assertIn("Log setup failed. Validation did not run.", result.stderr)
         self.assertFalse(marker.exists())
+
+
+class ZshLogRecipeTests(LogRecipeTests):
+    """Repeat the recipe tests in zsh, where `status` is a read-only variable."""
+
+    # -f skips startup files, so the caller's zsh configuration cannot affect the result.
+    shell_argv = ["zsh", "-f", "-c"]
+
+    def setUp(self):
+        if shutil.which("zsh") is None:
+            self.skipTest("zsh is not installed; zsh compatibility of the log recipe is NOT verified")
+        super().setUp()
 
 
 if __name__ == "__main__":
