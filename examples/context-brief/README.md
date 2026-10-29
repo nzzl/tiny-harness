@@ -31,15 +31,27 @@ Add these lines anywhere in `.tiny-harness/TASK.md`. All of them are optional.
 See [TASK.example.md](TASK.example.md).
 
 ```
-Basis: <commit the notes were last reconciled against>
+Basis: <hash of the commit the notes were last reconciled against>
 Source: <repository-relative path that the next step depends on>
 Evidence: <log path or URL>
 Next: <one concrete action>
 ```
 
 Repeat `Source:` and `Evidence:` for each item. List only the files that the
-next step depends on. A directory is allowed. After you reconcile the notes with
-the files again, update `Basis:`.
+next step depends on. A directory is allowed.
+
+`Basis:` must be a commit hash. To get it, run this command after you reconcile
+the notes with the files:
+
+```sh
+git rev-parse HEAD
+```
+
+Record the printed hash, for example `Basis: 4e0d7aa9c1...`. Do not record the
+word `HEAD`, a branch name, a tag, or an expression such as `HEAD~1`. Each new
+commit moves those names. The brief then compares against the wrong commit and
+hides changes. For this reason, the brief rejects them. A full hash or an unambiguous
+abbreviation works. After the next reconciliation, record the new hash.
 
 A basis commit does not record uncommitted contents. If the notes describe
 uncommitted work, "unchanged relative to recorded basis" says nothing about that
@@ -73,15 +85,18 @@ Each source gets one of these results:
   in at least one of these layers. Additions and deletions count.
 - `unchanged relative to recorded basis`: Git shows no difference in any layer.
   This does not mean that a note about the file is correct.
-- `unknown (...)`: the script cannot compare. The reason names the cause: no
-  basis, multiple bases, basis not found, no HEAD, a Git error, an untracked
-  path, an absent path, or a path outside the repository.
+- `unknown (...)`: the script cannot compare, and the reason names the cause.
+  The basis problems are: none, more than one, not a commit hash, a hash that
+  resolves through a reference, not found, or no HEAD. The other causes are a
+  Git error, an untracked path, an absent path, or a path outside the repository.
 
 If the basis is not an ancestor of HEAD, the brief says so. The results are then
 content differences only. Evidence paths get only a size from the file system.
 The script does not open them, and it does not check URLs.
 
-The script uses `git --no-optional-locks` and writes no files. It does not edit
+The script uses `git --no-optional-locks` and writes no files. Its diff commands
+use `--no-ext-diff` and `--no-textconv`, so configured diff helpers and text
+conversion programs do not run and cannot change a result. It does not edit
 TASK.md. It is not a check, and it runs on the working tree, not on the staged
 snapshot. Required checks still run in full at each commit.
 

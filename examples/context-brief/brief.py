@@ -22,6 +22,9 @@ CAVEAT = (
 FIELD = re.compile(r"^\s*(Basis|Source|Evidence|Next):\s*(.*?)\s*$")
 UNCHECKED = re.compile(r"^\s*[-*]\s+\[ \]\s+(.*?)\s*$")
 URL = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*://")
+COMMIT_HASH = re.compile(r"^[0-9a-fA-F]{4,64}$")
+# Configured diff helpers and text conversion can run programs and redefine "no difference".
+DIFF = ("diff", "--no-ext-diff", "--no-textconv")
 
 
 def git(root, *args):
@@ -63,6 +66,8 @@ def resolve_basis(root, values):
     if len(distinct) > 1:
         return None, "unknown (multiple different Basis lines)"
     value = distinct.pop()
+    if not COMMIT_HASH.match(value):
+        return None, "unknown (Basis must be a fixed commit hash, not a reference or expression)"
     if git(root, "rev-parse", "--verify", "--quiet", "HEAD")[0] != 0:
         return None, "unknown (no HEAD)"
     code, out, err = git(root, "rev-parse", "--verify", "--quiet", value + "^{commit}")
@@ -71,6 +76,9 @@ def resolve_basis(root, values):
     if code != 0:
         return None, "unknown (git error: " + first_line(err) + ")"
     commit = out.strip()
+    # Git resolves a reference before an abbreviated hash, so a hex-named branch can win.
+    if not commit.startswith(value.lower()):
+        return None, "unknown (" + value + " resolves through a reference, not as a commit hash)"
     code, _, err = git(root, "merge-base", "--is-ancestor", commit, "HEAD")
     if code == 0:
         count = git(root, "rev-list", "--count", commit + "..HEAD")[1].strip() or "unknown"
@@ -93,7 +101,7 @@ def compare(root, basis, path, git=git):
     layers = (("committed", (basis, "HEAD")), ("staged", ("--cached", "HEAD")), ("unstaged", ()))
     changed, errors = [], []
     for name, revisions in layers:
-        code, _, err = git(root, "diff", "--quiet", *revisions, "--", path)
+        code, _, err = git(root, *DIFF, "--quiet", *revisions, "--", path)
         if code == 1:
             changed.append(name)
         elif code != 0:
@@ -149,8 +157,8 @@ def git_lines(root):
     branch = out.strip() if code == 0 else "detached or unknown"
     code, out, _ = git(root, "log", "-1", "--format=%h %s")
     lines = ["Git: branch " + branch + "; HEAD " + (out.strip() if code == 0 else "none")]
-    for title, args in (("Staged", ("diff", "--cached", "--name-status")),
-                        ("Unstaged", ("diff", "--name-status")),
+    for title, args in (("Staged", (*DIFF, "--cached", "--name-status")),
+                        ("Unstaged", (*DIFF, "--name-status")),
                         ("Untracked", ("ls-files", "--others", "--exclude-standard"))):
         code, out, err = git(root, *args)
         if code != 0:

@@ -88,6 +88,105 @@ class ContextBriefTests(unittest.TestCase):
         self.assertIn("1 commits behind", output)
         self.assertNotIn("verified", output.lower())
 
+    def layered_changes(self):
+        """Commit a basis, then change one file in each comparison layer."""
+        for name in ("committed.txt", "staged.txt", "unstaged.txt", "same.txt"):
+            self.write(name, "original\n")
+        self.git("add", ".")
+        self.git("commit", "-qm", "Initial")
+        basis = self.git("rev-parse", "HEAD")
+        self.commit("committed.txt", "committed\n")
+        self.write("staged.txt", "staged\n")
+        self.git("add", "staged.txt")
+        self.write("unstaged.txt", "unstaged\n")
+        self.task("Basis: " + basis, *("Source: " + name for name in
+                                       ("committed.txt", "staged.txt", "unstaged.txt", "same.txt")))
+
+    def assert_layers_reported(self, output):
+        self.assertEqual(self.source_result(output, "committed.txt"), "changed (committed)")
+        self.assertEqual(self.source_result(output, "staged.txt"), "changed (staged)")
+        self.assertEqual(self.source_result(output, "unstaged.txt"), "changed (unstaged)")
+        self.assertEqual(self.source_result(output, "same.txt"), "unchanged relative to recorded basis")
+
+    def helper(self, name, body):
+        """Write an executable outside the repository that leaves a marker when run."""
+        marker = Path(self.temporary.name) / (name + "-ran")
+        script = Path(self.temporary.name) / name
+        script.write_text("#!/bin/sh\ntouch " + "'" + str(marker) + "'\n" + body)
+        script.chmod(0o755)
+        return script, marker
+
+    def test_external_diff_helpers_are_never_invoked(self):
+        self.layered_changes()
+        # A trusted helper that reports "no difference" would otherwise hide every change.
+        script, marker = self.helper("external-diff", "exit 0\n")
+        self.git("config", "diff.external", str(script))
+        self.git("config", "diff.trustExitCode", "true")
+        self.git("config", "diff.helper.command", str(script))
+        self.git("config", "diff.helper.trustExitCode", "true")
+        self.write(".git/info/attributes", "*.txt diff=helper\n")
+        self.assert_layers_reported(self.output())
+        self.assertFalse(marker.exists(), "brief invoked an external diff helper")
+
+    def test_text_conversion_is_never_invoked(self):
+        self.layered_changes()
+        # Identical converted text for every file would otherwise hide every change.
+        script, marker = self.helper("textconv", "echo same\n")
+        self.git("config", "diff.convert.textconv", str(script))
+        self.write(".git/info/attributes", "*.txt diff=convert\n")
+        self.assert_layers_reported(self.output())
+        self.assertFalse(marker.exists(), "brief invoked a text conversion helper")
+
+    def test_fixed_basis_still_reports_later_committed_changes(self):
+        basis = self.commit("file.txt", "checkpoint\n")
+        self.commit("file.txt", "changed after checkpoint\n")
+        self.task("Basis: " + basis, "Source: file.txt")
+        output = self.output()
+        self.assertEqual(self.source_result(output, "file.txt"), "changed (committed)")
+        self.assertIn("1 commits behind", output)
+
+    def test_moving_references_and_expressions_are_rejected(self):
+        first = self.commit("file.txt", "one\n")
+        self.commit("file.txt", "two\n")
+        self.git("branch", "feature")
+        self.git("tag", "v1")
+        branch = self.git("symbolic-ref", "--short", "HEAD")
+        for value in ("HEAD", branch, "feature", "v1", "@", "HEAD~1", first[:7] + "^{commit}",
+                      first + "~0", "refs/heads/feature"):
+            with self.subTest(value=value):
+                self.task("Basis: " + value, "Source: file.txt")
+                output = self.output()
+                expected = "unknown (Basis must be a fixed commit hash, not a reference or expression)"
+                self.assertIn("Basis: " + expected, output)
+                self.assertEqual(self.source_result(output, "file.txt"), expected)
+
+    def test_hex_named_reference_is_not_treated_as_a_commit_hash(self):
+        self.commit("file.txt", "one\n")
+        # A branch whose name looks like a hash is still a moving reference.
+        self.git("branch", "deadbeef")
+        self.task("Basis: deadbeef", "Source: file.txt")
+        output = self.output()
+        self.assertIn("Basis: unknown (deadbeef resolves through a reference, not as a commit hash)",
+                      output)
+
+    def test_full_and_abbreviated_hashes_resolve_and_others_are_unavailable(self):
+        basis = self.commit("file.txt", "one\n")
+        self.commit("file.txt", "two\n")
+        blob = self.git("rev-parse", "HEAD:file.txt")
+        for value in (basis, basis[:7], basis[:12].upper()):
+            with self.subTest(value=value):
+                self.task("Basis: " + value, "Source: file.txt")
+                output = self.output()
+                self.assertIn("Basis: " + value + " (ancestor of HEAD, 1 commits behind)", output)
+                self.assertEqual(self.source_result(output, "file.txt"), "changed (committed)")
+        for value in ("0123456789abcdef0123456789abcdef01234567", blob):
+            with self.subTest(value=value):
+                self.task("Basis: " + value, "Source: file.txt")
+                output = self.output()
+                self.assertIn("Basis: unknown (basis not found", output)
+                self.assertTrue(self.source_result(output, "file.txt").startswith(
+                    "unknown (basis not found"), output)
+
     def test_deleted_and_added_files_count_as_changed(self):
         basis = self.commit("old.txt", "old\n")
         self.git("rm", "-q", "old.txt")
@@ -107,11 +206,11 @@ class ContextBriefTests(unittest.TestCase):
             self.assertTrue(self.source_result(output, "file.txt").startswith(expected), output)
         self.write("file.txt", "x\n")
         check(["Basis: abc1234"], "unknown (no HEAD)")
-        self.commit("file.txt", "x\n")
-        self.commit("file.txt", "y\n")
+        first = self.commit("file.txt", "x\n")
+        second = self.commit("file.txt", "y\n")
         check([], "unknown (no basis recorded)")
         check(["Basis: 0123456789abcdef0123456789abcdef01234567"], "unknown (basis not found")
-        check(["Basis: HEAD", "Basis: HEAD~1"], "unknown (multiple different Basis lines)")
+        check(["Basis: " + first, "Basis: " + second], "unknown (multiple different Basis lines)")
 
     def test_diverged_basis_is_labeled_as_content_comparison(self):
         self.commit("file.txt", "base\n")
@@ -159,8 +258,8 @@ class ContextBriefTests(unittest.TestCase):
 
     def test_output_fits_limits_with_multibyte_text(self):
         criteria = ["- [ ] Ünïcode criterion " + str(number) + " " + "ü€" * 150 for number in range(300)]
-        self.commit("file.txt", "x\n")
-        self.task("Basis: HEAD", *criteria, "Next: " + "→" * 500)
+        basis = self.commit("file.txt", "x\n")
+        self.task("Basis: " + basis, *criteria, "Next: " + "→" * 500)
         for max_lines, max_bytes in ((60, 6000), (12, 1500), (7, 700), (200, 100000)):
             with self.subTest(max_lines=max_lines, max_bytes=max_bytes):
                 raw = self.run_brief("--max-lines", str(max_lines), "--max-bytes", str(max_bytes)).stdout
@@ -179,8 +278,7 @@ class ContextBriefTests(unittest.TestCase):
         self.assertIn("[292 more unchecked criteria from TASK.md:12]", full)
 
     def test_budget_too_small_is_rejected(self):
-        self.commit("file.txt", "x\n")
-        self.task("Basis: HEAD")
+        self.task("Basis: " + self.commit("file.txt", "x\n"))
         lines, octets = brief.minimum(4, 500)
         self.assertEqual(lines, 5)
         self.run_brief("--max-lines", "4", expect=2)
