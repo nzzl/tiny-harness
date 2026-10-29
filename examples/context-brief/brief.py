@@ -30,8 +30,10 @@ DIFF = ("diff", "--no-ext-diff", "--no-textconv")
 def git(root, *args):
     """Return (exit code, stdout, stderr); never raise for a nonzero exit."""
     env = dict(os.environ, GIT_OPTIONAL_LOCKS="0")
+    # A configured fsmonitor hook runs a program and can report changed files as unchanged.
     try:
-        result = subprocess.run(["git", "--no-optional-locks", "--literal-pathspecs", *args],
+        result = subprocess.run(["git", "-c", "core.fsmonitor=false", "--no-optional-locks",
+                                 "--literal-pathspecs", *args],
                                 cwd=root, env=env, stdin=subprocess.DEVNULL,
                                 capture_output=True, text=True, errors="replace")
     except OSError as error:

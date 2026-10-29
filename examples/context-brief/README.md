@@ -95,8 +95,9 @@ content differences only. Evidence paths get only a size from the file system.
 The script does not open them, and it does not check URLs.
 
 The script uses `git --no-optional-locks` and writes no files. Its diff commands
-use `--no-ext-diff` and `--no-textconv`, so configured diff helpers and text
-conversion programs do not run and cannot change a result. It does not edit
+use `--no-ext-diff` and `--no-textconv`, and all its Git commands use
+`-c core.fsmonitor=false`. Configured diff helpers, text conversion programs,
+and fsmonitor hooks do not run and cannot change a result. It does not edit
 TASK.md. It is not a check, and it runs on the working tree, not on the staged
 snapshot. Required checks still run in full at each commit.
 

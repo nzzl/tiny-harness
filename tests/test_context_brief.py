@@ -137,6 +137,32 @@ class ContextBriefTests(unittest.TestCase):
         self.assert_layers_reported(self.output())
         self.assertFalse(marker.exists(), "brief invoked a text conversion helper")
 
+    def test_fsmonitor_hook_is_never_invoked(self):
+        basis = self.commit("file.txt", "original\n")
+        # Hook protocol 2: print a token and a NUL, then changed paths; none means "nothing changed".
+        script, marker = self.helper("fsmonitor", "printf 'token-fixed\\0'\n")
+        self.git("config", "core.fsmonitor", str(script))
+        self.git("config", "core.fsmonitorHookVersion", "2")
+        self.git("update-index", "--fsmonitor")
+        priming = {key: value for key, value in self.env.items() if key != "GIT_OPTIONAL_LOCKS"}
+        for _ in range(2):
+            subprocess.run(["git", "status", "--porcelain"], cwd=self.root, env=priming,
+                           check=True, capture_output=True, timeout=20)
+        self.write("file.txt", "modified without staging\n")
+        hidden = subprocess.run(["git", "diff", "--quiet", "--", "file.txt"], cwd=self.root,
+                                env=self.env, capture_output=True, timeout=20)
+        self.assertEqual(hidden.returncode, 0, "fixture setup failed: fsmonitor did not hide the change")
+        self.assertTrue(marker.exists(), "fixture setup failed: fsmonitor hook did not run")
+        marker.unlink()
+        self.task("Basis: " + basis, "Source: file.txt")
+        config, index = self.root / ".git/config", self.root / ".git/index"
+        before = (config.read_bytes(), index.read_bytes(), index.stat().st_mtime_ns)
+        output = self.output()
+        self.assertFalse(marker.exists(), "brief invoked the fsmonitor hook")
+        self.assertEqual(self.source_result(output, "file.txt"), "changed (unstaged)")
+        self.assertIn("Unstaged (1):\n  M file.txt\n", output)
+        self.assertEqual((config.read_bytes(), index.read_bytes(), index.stat().st_mtime_ns), before)
+
     def test_fixed_basis_still_reports_later_committed_changes(self):
         basis = self.commit("file.txt", "checkpoint\n")
         self.commit("file.txt", "changed after checkpoint\n")
