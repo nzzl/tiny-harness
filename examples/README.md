@@ -64,3 +64,10 @@ The [long-running-project recipe](long-running/README.md) shows how to retain an
 existing backlog, resume from evidence, verify user-visible behavior, and leave a
 useful handoff. It includes an optional [feature checklist](long-running/FEATURES.md).
 This adds no required checks or files to the installed harness.
+
+## Context brief (pilot)
+
+The [context-brief pilot](context-brief/README.md) adds optional checkpoint
+fields, a recipe that keeps long check logs, and a read-only script. The script
+reports which referenced files changed since a recorded commit. It is an
+unevaluated experiment, not part of the installed harness or its validation.
